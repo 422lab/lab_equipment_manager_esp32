@@ -12,15 +12,13 @@
 #include "chip/spi.h"
 #include "chip/i2s.h"
 #include "chip/wifi.h"
-#include "chip/uart.h"
 
-#include "board/pn532.h"
+#include "board/relay.h"
 
 #include "user/ntp.h"
 #include "user/led.h"
 #include "user/gui.h"
 #include "user/key.h"
-#include "user/nfc_app.h"
 #include "user/http_app.h"
 #include "user/audio_player.h"
 
@@ -37,41 +35,31 @@ static void chip_init(void)
 
     wifi_init();
 
-    uart1_init();
-
 #ifdef CONFIG_ENABLE_AUDIO_PROMPT
     i2s_output_init();
 #endif
 
-#ifdef CONFIG_ENABLE_GUI
     hspi_init();
-#endif
 }
 
 static void board_init(void)
 {
-    pn532_init();
+    relay_init();
 }
 
 static void user_init(void)
 {
     ntp_init();
 
-    nfc_app_init();
-
     http_app_init();
 
-#ifdef CONFIG_ENABLE_SC_KEY
     key_init();
-#endif
 
 #ifdef CONFIG_ENABLE_LED
     led_init();
 #endif
 
-#ifdef CONFIG_ENABLE_GUI
     gui_init();
-#endif
 
 #ifdef CONFIG_ENABLE_AUDIO_PROMPT
     audio_player_init();

@@ -21,7 +21,6 @@ typedef enum user_event_group_bits {
     NTP_READY_BIT = BIT1,
 
     GUI_RELOAD_BIT     = BIT2,
-    NFC_APP_RUN_BIT    = BIT3,
     KEY_SCAN_RUN_BIT   = BIT4,
 
     AUDIO_PLAYER_RUN_BIT  = BIT5,
@@ -31,9 +30,9 @@ typedef enum user_event_group_bits {
     HTTP_APP_OTA_READY_BIT  = BIT8,
     HTTP_APP_OTA_FAILED_BIT = BIT9,
 
-    HTTP_APP_TOKEN_RUN_BIT    = BIT10,
-    HTTP_APP_TOKEN_READY_BIT  = BIT11,
-    HTTP_APP_TOKEN_FAILED_BIT = BIT12
+    HTTP_APP_STATUS_RUN_BIT    = BIT10,
+    HTTP_APP_STATUS_READY_BIT  = BIT11,
+    HTTP_APP_STATUS_FAILED_BIT = BIT12
 } user_event_group_bits_t;
 
 extern EventGroupHandle_t os_event_group;

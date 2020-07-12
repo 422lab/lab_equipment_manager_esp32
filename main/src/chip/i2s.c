@@ -16,7 +16,7 @@
 #ifdef CONFIG_ENABLE_AUDIO_PROMPT
 static i2s_config_t i2s_output_config = {
     .mode = I2S_MODE_MASTER | I2S_MODE_TX,
-    .communication_format = I2S_COMM_FORMAT_I2S | I2S_COMM_FORMAT_I2S_MSB,
+    .communication_format = I2S_COMM_FORMAT_STAND_I2S,
     .use_apll = 1,                                                          // Use APLL
     .sample_rate = 44100,
     .bits_per_sample = I2S_BITS_PER_SAMPLE_16BIT,

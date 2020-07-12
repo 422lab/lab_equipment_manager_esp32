@@ -10,35 +10,16 @@
 
 #include <stdint.h>
 
-#ifdef CONFIG_SCREEN_PANEL_ST7735
-// ani0.gif
-extern const char ani0_160x80_gif_ptr[] asm("_binary_ani0_160x80_gif_start");
-extern const char ani0_160x80_gif_end[] asm("_binary_ani0_160x80_gif_end");
-// ani1.gif
-extern const char ani1_160x80_gif_ptr[] asm("_binary_ani1_160x80_gif_start");
-extern const char ani1_160x80_gif_end[] asm("_binary_ani1_160x80_gif_end");
-// ani2.gif
-extern const char ani2_160x80_gif_ptr[] asm("_binary_ani2_160x80_gif_start");
-extern const char ani2_160x80_gif_end[] asm("_binary_ani2_160x80_gif_end");
-// ani3.gif
-extern const char ani3_160x80_gif_ptr[] asm("_binary_ani3_160x80_gif_start");
-extern const char ani3_160x80_gif_end[] asm("_binary_ani3_160x80_gif_end");
-// ani4.gif
-extern const char ani4_160x80_gif_ptr[] asm("_binary_ani4_160x80_gif_start");
-extern const char ani4_160x80_gif_end[] asm("_binary_ani4_160x80_gif_end");
-// ani5.gif
-extern const char ani5_160x80_gif_ptr[] asm("_binary_ani5_160x80_gif_start");
-extern const char ani5_160x80_gif_end[] asm("_binary_ani5_160x80_gif_end");
-// ani6.gif
-extern const char ani6_160x80_gif_ptr[] asm("_binary_ani6_160x80_gif_start");
-extern const char ani6_160x80_gif_end[] asm("_binary_ani6_160x80_gif_end");
-// ani7.gif
-extern const char ani7_160x80_gif_ptr[] asm("_binary_ani7_160x80_gif_start");
-extern const char ani7_160x80_gif_end[] asm("_binary_ani7_160x80_gif_end");
-// ani8.gif
-extern const char ani8_160x80_gif_ptr[] asm("_binary_ani8_160x80_gif_start");
-extern const char ani8_160x80_gif_end[] asm("_binary_ani8_160x80_gif_end");
-#else
+typedef enum {
+    GUI_MODE_IDX_TIMER   = 0xEE,
+    GUI_MODE_IDX_QR_CODE = 0xEF,
+
+    GUI_MODE_IDX_MAX,
+
+    GUI_MODE_IDX_PAUSE = 0xFE,
+    GUI_MODE_IDX_OFF   = 0xFF,
+} gui_mode_t;
+
 // ani0.gif
 extern const char ani0_240x135_gif_ptr[] asm("_binary_ani0_240x135_gif_start");
 extern const char ani0_240x135_gif_end[] asm("_binary_ani0_240x135_gif_end");
@@ -66,9 +47,12 @@ extern const char ani7_240x135_gif_end[] asm("_binary_ani7_240x135_gif_end");
 // ani8.gif
 extern const char ani8_240x135_gif_ptr[] asm("_binary_ani8_240x135_gif_start");
 extern const char ani8_240x135_gif_end[] asm("_binary_ani8_240x135_gif_end");
-#endif
 
-extern void gui_show_image(uint8_t idx);
+extern void gui_set_user_info(const char *u_i);
+extern void gui_set_timer_time(int t_h, int t_m, int t_s);
+
+extern void gui_set_mode(uint8_t idx);
+extern uint8_t gui_get_mode(void);
 
 extern void gui_init(void);
 

@@ -12,13 +12,14 @@
 
 #include "core/os.h"
 #include "chip/wifi.h"
+#include "board/relay.h"
 
 #include "user/gui.h"
 #include "user/led.h"
 #include "user/http_app.h"
 #include "user/audio_player.h"
 #include "user/http_app_ota.h"
-#include "user/http_app_token.h"
+#include "user/http_app_status.h"
 
 #define TAG "http_app"
 
@@ -31,14 +32,14 @@ static void http_app_task(void *pvParameter)
     while (1) {
         EventBits_t uxBits = xEventGroupWaitBits(
             user_event_group,
-            HTTP_APP_TOKEN_RUN_BIT | HTTP_APP_OTA_RUN_BIT,
+            HTTP_APP_STATUS_RUN_BIT | HTTP_APP_OTA_RUN_BIT,
             pdFALSE,
             pdFALSE,
             portMAX_DELAY
         );
 
         led_set_mode(4);
-        gui_show_image(1);
+        gui_set_mode(1);
 
         memset(&config, 0, sizeof(config));
         memset(post_data, 0, sizeof(post_data));
@@ -55,12 +56,12 @@ static void http_app_task(void *pvParameter)
         config.cert_pem = cert0_pem_ptr;
 #endif
 
-        if (uxBits & HTTP_APP_TOKEN_RUN_BIT) {
-            config.event_handler = http_app_token_event_handler;
-            http_app_token_prepare_data(post_data, sizeof(post_data));
+        if (uxBits & HTTP_APP_STATUS_RUN_BIT) {
+            config.event_handler = http_app_status_event_handler;
+            http_app_status_prepare_data(post_data, sizeof(post_data));
             xEventGroupClearBits(
                 user_event_group,
-                HTTP_APP_TOKEN_FAILED_BIT | HTTP_APP_TOKEN_READY_BIT
+                HTTP_APP_STATUS_FAILED_BIT | HTTP_APP_STATUS_READY_BIT
             );
         } else {
             config.event_handler = http_app_ota_event_handler;
@@ -79,24 +80,28 @@ static void http_app_task(void *pvParameter)
         if (err != ESP_OK) {
             ESP_LOGE(TAG, "error perform http(s) request %s", esp_err_to_name(err));
             if (config.event_handler != http_app_ota_event_handler) {
-                gui_show_image(6);
-                audio_player_play_file(5);
+                if (!relay_get_status()) {
+                    if (!strncmp(http_app_get_token(), "CCCC", 4)) {
+                        gui_set_mode(6);
+                    } else {
+                        gui_set_mode(GUI_MODE_IDX_QR_CODE);
+                    }
+                }
             }
         }
         esp_http_client_cleanup(client);
 
-        vTaskDelay(2000 / portTICK_RATE_MS);
-
-        led_set_mode(1);
-        gui_show_image(3);
-
-        if (uxBits & HTTP_APP_TOKEN_RUN_BIT) {
-            xEventGroupSetBits(user_event_group, HTTP_APP_TOKEN_READY_BIT);
-            xEventGroupClearBits(user_event_group, HTTP_APP_TOKEN_RUN_BIT);
+        if (uxBits & HTTP_APP_STATUS_RUN_BIT) {
+            xEventGroupSetBits(user_event_group, HTTP_APP_STATUS_READY_BIT);
+            xEventGroupClearBits(user_event_group, HTTP_APP_STATUS_RUN_BIT);
         } else {
             xEventGroupSetBits(user_event_group, HTTP_APP_OTA_READY_BIT);
             xEventGroupClearBits(user_event_group, HTTP_APP_OTA_RUN_BIT);
         }
+
+        vTaskDelay(2000 / portTICK_RATE_MS);
+
+        xEventGroupSetBits(user_event_group, KEY_SCAN_RUN_BIT);
     }
 }
 

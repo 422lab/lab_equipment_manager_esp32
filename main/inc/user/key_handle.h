@@ -9,5 +9,6 @@
 #define INC_USER_KEY_HANDLE_H_
 
 extern void sc_key_handle(void);
+extern void pwr_key_handle(void);
 
 #endif /* INC_USER_KEY_HANDLE_H_ */

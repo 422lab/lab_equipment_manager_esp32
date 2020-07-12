@@ -14,12 +14,14 @@
 #include "driver/gpio.h"
 
 #include "core/os.h"
-#include "user/nfc_app.h"
+#include "board/relay.h"
 #include "user/gui.h"
 #include "user/led.h"
 #include "user/audio_player.h"
+#include "user/http_app_status.h"
 
-#define SC_KEY_TAG "sc_key"
+#define SC_KEY_TAG  "sc_key"
+#define PWR_KEY_TAG "pwr_key"
 
 #ifdef CONFIG_ENABLE_SC_KEY
 void sc_key_handle(void)
@@ -29,9 +31,8 @@ void sc_key_handle(void)
     ESP_LOGI(SC_KEY_TAG, "start smartconfig");
     xEventGroupSetBits(os_event_group, WIFI_CONFIG_BIT);
 
-    nfc_app_set_mode(0);
     led_set_mode(5);
-    gui_show_image(7);
+    gui_set_mode(7);
     audio_player_play_file(7);
 
     ESP_ERROR_CHECK(esp_wifi_disconnect());
@@ -41,3 +42,18 @@ void sc_key_handle(void)
     ESP_ERROR_CHECK(esp_smartconfig_start(&sc_cfg));
 }
 #endif // CONFIG_ENABLE_SC_KEY
+
+void pwr_key_handle(void)
+{
+    xEventGroupClearBits(user_event_group, KEY_SCAN_RUN_BIT);
+
+    if (relay_get_status()) {
+        ESP_LOGI(PWR_KEY_TAG, "power off");
+
+        http_app_update_status(HTTP_REQ_IDX_OFF);
+    } else {
+        ESP_LOGI(PWR_KEY_TAG, "power on");
+
+        http_app_update_status(HTTP_REQ_IDX_ON);
+    }
+}

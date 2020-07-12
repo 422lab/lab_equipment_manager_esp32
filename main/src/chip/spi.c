@@ -9,12 +9,10 @@
 
 #include "driver/spi_master.h"
 
-#include "board/st7735.h"
 #include "board/st7789.h"
 
 #define HSPI_TAG "hspi"
 
-#ifdef CONFIG_ENABLE_GUI
 spi_device_handle_t hspi;
 
 void hspi_init(void)
@@ -25,24 +23,15 @@ void hspi_init(void)
         .sclk_io_num = CONFIG_SPI_SCLK_PIN,
         .quadwp_io_num = -1,
         .quadhd_io_num = -1,
-#ifdef CONFIG_SCREEN_PANEL_ST7735
-        .max_transfer_sz = ST7735_SCREEN_WIDTH*ST7735_SCREEN_HEIGHT*2
-#else
         .max_transfer_sz = ST7789_SCREEN_WIDTH*ST7789_SCREEN_HEIGHT*2
-#endif
     };
     ESP_ERROR_CHECK(spi_bus_initialize(HSPI_HOST, &buscfg, 1));
 
     spi_device_interface_config_t devcfg = {
         .mode = 0,                                // SPI mode 0
         .spics_io_num = CONFIG_SPI_CS_PIN,        // CS pin
-#ifdef CONFIG_SCREEN_PANEL_ST7735
-        .clock_speed_hz = 26000000,               // Clock out at 26 MHz
-        .pre_cb = st7735_setpin_dc,               // Specify pre-transfer callback to handle D/C line
-#else
         .clock_speed_hz = 40000000,               // Clock out at 40 MHz
         .pre_cb = st7789_setpin_dc,               // Specify pre-transfer callback to handle D/C line
-#endif
         .queue_size = 2,                          // We want to be able to queue 2 transactions at a time
         .flags = SPI_DEVICE_3WIRE | SPI_DEVICE_HALFDUPLEX
     };
@@ -55,4 +44,3 @@ void hspi_init(void)
              devcfg.spics_io_num
     );
 }
-#endif

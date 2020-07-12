@@ -14,8 +14,8 @@
 
 #include "user/gui.h"
 #include "user/led.h"
-#include "user/nfc_app.h"
 #include "user/http_app_ota.h"
+#include "user/http_app_status.h"
 
 #define TAG "ntp"
 
@@ -46,7 +46,7 @@ static void ntp_task(void *pvParameter)
     );
 
     led_set_mode(2);
-    gui_show_image(5);
+    gui_set_mode(5);
 
     sntp_setoperatingmode(SNTP_OPMODE_POLL);
     sntp_setservername(0, CONFIG_NTP_SERVER_URL);
@@ -69,7 +69,7 @@ static void ntp_task(void *pvParameter)
         if (++retry > retry_count) {
             ESP_LOGE(TAG, "time sync timeout");
 
-            gui_show_image(4);
+            gui_set_mode(4);
             vTaskDelay(2000 / portTICK_RATE_MS);
 
             esp_restart();
@@ -79,16 +79,7 @@ static void ntp_task(void *pvParameter)
     while (1) {
         vTaskDelay(60000 / portTICK_RATE_MS);
 
-        EventBits_t uxBits = xEventGroupGetBits(user_event_group);
-        if (uxBits & NFC_APP_RUN_BIT) {
-            time(&now);
-            localtime_r(&now, &timeinfo);
-            if (timeinfo.tm_hour == 0 && timeinfo.tm_min == 0) {
-                nfc_app_set_mode(0);
-                http_app_check_for_updates();
-                nfc_app_set_mode(1);
-            }
-        }
+        http_app_update_status(HTTP_REQ_IDX_UPD);
     }
 }
 

@@ -85,7 +85,7 @@
 // #define GDISP_NEED_QUERY                             TRUE
 #define GDISP_NEED_MULTITHREAD                       TRUE
 // #define GDISP_NEED_STREAMING                         TRUE
-// #define GDISP_NEED_TEXT                              TRUE
+#define GDISP_NEED_TEXT                              TRUE
 //    #define GDISP_NEED_TEXT_WORDWRAP                 TRUE
 //    #define GDISP_NEED_TEXT_BOXPADLR                 1
 //    #define GDISP_NEED_TEXT_BOXPADTB                 1
@@ -100,7 +100,7 @@
 //    #define GDISP_INCLUDE_FONT_DEJAVUSANS16          TRUE
 //    #define GDISP_INCLUDE_FONT_DEJAVUSANS20          TRUE
 //    #define GDISP_INCLUDE_FONT_DEJAVUSANS24          TRUE
-//    #define GDISP_INCLUDE_FONT_DEJAVUSANS32          TRUE
+   #define GDISP_INCLUDE_FONT_DEJAVUSANS32          TRUE
 //    #define GDISP_INCLUDE_FONT_DEJAVUSANSBOLD12      TRUE
 //    #define GDISP_INCLUDE_FONT_FIXED_10X20           TRUE
 //    #define GDISP_INCLUDE_FONT_FIXED_7X14            TRUE

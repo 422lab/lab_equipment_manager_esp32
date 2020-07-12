@@ -21,8 +21,8 @@
 #include "user/gui.h"
 #include "user/led.h"
 #include "user/ntp.h"
-#include "user/nfc_app.h"
 #include "user/http_app_ota.h"
+#include "user/http_app_status.h"
 
 #define OS_SC_TAG "os_sc"
 
@@ -36,7 +36,7 @@ static void wifi_event_handler(void* arg, esp_event_base_t event_base,
         case WIFI_EVENT_STA_START: {
             EventBits_t uxBits = xEventGroupGetBits(os_event_group);
             if (!(uxBits & WIFI_CONFIG_BIT)) {
-                gui_show_image(0);
+                gui_set_mode(0);
                 ESP_ERROR_CHECK(esp_wifi_connect());
             }
             break;
@@ -47,7 +47,7 @@ static void wifi_event_handler(void* arg, esp_event_base_t event_base,
         case WIFI_EVENT_STA_DISCONNECTED: {
             EventBits_t uxBits = xEventGroupGetBits(os_event_group);
             if (uxBits & WIFI_READY_BIT) {
-                gui_show_image(4);
+                gui_set_mode(4);
                 vTaskDelay(2000 / portTICK_RATE_MS);
                 esp_restart();
             }
@@ -70,10 +70,10 @@ static void ip_event_handler(void* arg, esp_event_base_t event_base,
             xEventGroupSetBits(os_event_group, WIFI_READY_BIT);
             xEventGroupClearBits(user_event_group, KEY_SCAN_RUN_BIT);
             ntp_sync_time();
+#ifdef CONFIG_ENABLE_OTA
             http_app_check_for_updates();
-            gui_show_image(3);
-            led_set_mode(1);
-            nfc_app_set_mode(1);
+#endif
+            http_app_update_status(HTTP_REQ_IDX_UPD);
             break;
         }
         default:

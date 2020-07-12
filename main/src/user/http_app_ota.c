@@ -49,7 +49,7 @@ esp_err_t http_app_ota_event_handler(esp_http_client_event_t *evt)
                 data_length = 0;
 
                 led_set_mode(7);
-                gui_show_image(8);
+                gui_set_mode(8);
 
                 update_partition = esp_ota_get_next_update_partition(NULL);
                 if (update_partition != NULL) {
@@ -93,7 +93,7 @@ esp_err_t http_app_ota_event_handler(esp_http_client_event_t *evt)
 
             ESP_LOGW(TAG, "prepare to restart system");
 
-            gui_show_image(4);
+            gui_set_mode(4);
             vTaskDelay(2000 / portTICK_RATE_MS);
 
             esp_restart();
@@ -125,7 +125,6 @@ void http_app_ota_prepare_data(char *buf, int len)
 
 void http_app_check_for_updates(void)
 {
-#ifdef CONFIG_ENABLE_OTA
     ESP_LOGI(TAG, "checking for firmware update...");
 
     EventBits_t uxBits = xEventGroupSync(
@@ -144,5 +143,4 @@ void http_app_check_for_updates(void)
 
         data_length = 0;
     }
-#endif
 }

@@ -1,4 +1,4 @@
-menu "NFC Attendance System"
+menu "Laboratory Power Manager"
 
 menu "Server Configuration"
 config SERVER_URL
@@ -28,7 +28,7 @@ config VERIFY_SERVER_CERT
 
 config ENABLE_OTA
     bool "Enable OTA Update"
-    default y
+    default n
     help
         Select this to enable ota update.
 endmenu
@@ -48,13 +48,13 @@ config WIFI_PASSWORD
 
 config WIFI_HOSTNAME_PREFIX
     string "WiFi Hostname Prefix"
-    default "NAS"
+    default "LPM"
     help
         WiFi hostname prefix for the device to use.
 
 config ENABLE_SC_KEY
     bool "Enable SmartConfig Key"
-    default y
+    default n
     help
         Select this to enable smartconfig key.
 
@@ -92,69 +92,30 @@ config NTP_TIMEZONE
     default "CST-8"
 endmenu
 
-menu "NFC Configuration"
-config PN532_RST_PIN
-    int "PN532 RST Pin"
-    default 26
-
-config PN532_TX_PIN
-    int "PN532 TX Pin"
-    default 17
-
-config PN532_RX_PIN
-    int "PN532 RX Pin"
-    default 16
-endmenu
-
 menu "GUI Configuration"
-config ENABLE_GUI
-    bool "Enable GUI"
-    default y
-    help
-        Select this to enable gui.
-
-choice SCREEN_PANEL
-    prompt "Screen Panel"
-    default SCREEN_PANEL_ST7789
-    depends on ENABLE_GUI
-    help
-        Select which screen panel to use.
-
-config SCREEN_PANEL_ST7735
-    bool "ST7735 80x160 LCD Panel"
-config SCREEN_PANEL_ST7789
-    bool "ST7789 135x240 LCD Panel"
-endchoice
-
-config DEVICE_RST_PIN
-    int "Device RST Pin"
+config LCD_RST_PIN
+    int "LCD RST Pin"
     default 14
-    depends on ENABLE_GUI
 
-config DEVICE_DC_PIN
-    int "Device DC Pin"
+config LCD_DC_PIN
+    int "LCD DC Pin"
     default 23
-    depends on ENABLE_GUI
 
-config DEVICE_BL_PIN
-    int "Device BL Pin"
+config LCD_BL_PIN
+    int "LCD BL Pin"
     default 4
-    depends on ENABLE_GUI
 
 config SPI_SCLK_PIN
     int "SPI SCLK Pin"
     default 5
-    depends on ENABLE_GUI
 
 config SPI_MOSI_PIN
     int "SPI MOSI Pin"
     default 18
-    depends on ENABLE_GUI
 
 config SPI_CS_PIN
     int "SPI CS Pin"
     default 27
-    depends on ENABLE_GUI
 endmenu
 
 menu "LED Configuration"
@@ -181,6 +142,46 @@ config LED_PIN
     int "LED Pin"
     default 25
     depends on ENABLE_LED
+endmenu
+
+menu "Key Configuration"
+config PWR_KEY_HOLD_TIME
+    int "Power Key Hold Time (ms)"
+    default 500
+
+choice PWR_KEY_ACTIVE_LEVEL
+    prompt "Power Key Active Level"
+    default PWR_KEY_ACTIVE_LOW
+    help
+        Select Power Key Active Level.
+
+config PWR_KEY_ACTIVE_HIGH
+    bool "Active High"
+config PWR_KEY_ACTIVE_LOW
+    bool "Active Low"
+endchoice
+
+config PWR_KEY_PIN
+    int "Power Key Pin"
+    default 0
+endmenu
+
+menu "Relay Configuration"
+choice RELAY_PIN_ACTIVE_LEVEL
+    prompt "Relay Pin Active Level"
+    default RELAY_PIN_ACTIVE_HIGH
+    help
+        Select Relay Pin Active Level.
+
+config RELAY_PIN_ACTIVE_HIGH
+    bool "Active High"
+config RELAY_PIN_ACTIVE_LOW
+    bool "Active Low"
+endchoice
+
+config RELAY_PIN
+    int "Relay Pin"
+    default 26
 endmenu
 
 menu "Audio Configuration"
