@@ -81,7 +81,7 @@ static void http_app_task(void *pvParameter)
             ESP_LOGE(TAG, "error perform http(s) request %s", esp_err_to_name(err));
             if (config.event_handler != http_app_ota_event_handler) {
                 if (!relay_get_status()) {
-                    if (!strncmp(http_app_get_token(), "CCCC", 4)) {
+                    if (!strncmp(http_app_get_token(), "\x43", 1)) {
                         gui_set_mode(6);
                     } else {
                         gui_set_mode(GUI_MODE_IDX_QR_CODE);

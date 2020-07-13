@@ -215,14 +215,6 @@ static void gui_task(void *pvParameter)
 
             break;
         case GUI_MODE_IDX_QR_CODE:
-            if (!strncmp(http_app_get_token(), "CCCC", 4)) {
-                ESP_LOGW(TAG, "no device token available");
-
-                gui_mode = 6;
-
-                break;
-            }
-
             qrcode_encode(http_app_get_token());
 
             gdispGSetBacklight(gui_gdisp, gui_backlight);
@@ -270,7 +262,7 @@ static void gui_task(void *pvParameter)
 
 void gui_set_user_info(const char *u_i)
 {
-    strncpy(u_info, u_i, sizeof(u_info));
+    strncpy(u_info, u_i, sizeof(u_info)-1);
 
     ESP_LOGI(TAG, "user info: %s", u_info);
 }

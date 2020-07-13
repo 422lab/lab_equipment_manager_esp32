@@ -56,67 +56,66 @@ esp_err_t http_app_status_event_handler(esp_http_client_event_t *evt)
 
                     switch (req) {
                         case HTTP_REQ_IDX_UPD:
-                            if (cJSON_IsTrue(status)) {
-                                cJSON *token = cJSON_GetObjectItemCaseSensitive(root, "token");
-                                char *c_token = cJSON_GetStringValue(token);
+                            if (relay_get_status()) {
+                                if (cJSON_IsTrue(status)) {
+                                    cJSON *user_info = cJSON_GetObjectItemCaseSensitive(root, "user_info");
+                                    char *c_user_info = cJSON_GetStringValue(user_info);
 
-                                memset(token_string, 0x00, sizeof(token_string));
-                                if (c_token) {
-                                    ESP_LOGW(TAG, "token: %s", c_token);
-                                    memcpy(token_string, c_token, strlen(c_token));
-                                }
+                                    if (c_user_info) {
+                                        gui_set_user_info(c_user_info);
+                                    }
 
-                                cJSON *user_info = cJSON_GetObjectItemCaseSensitive(root, "user_info");
-                                char *c_user_info = cJSON_GetStringValue(user_info);
+                                    cJSON *timer_time = cJSON_GetObjectItemCaseSensitive(root, "timer_time");
+                                    char *c_timer_time = cJSON_GetStringValue(timer_time);
 
-                                if (c_user_info) {
-                                    gui_set_user_info(c_user_info);
-                                }
+                                    if (c_timer_time) {
+                                        int hour, minute, second;
+                                        sscanf(c_timer_time, "%d:%d:%d", &hour, &minute, &second);
 
-                                cJSON *timer_time = cJSON_GetObjectItemCaseSensitive(root, "timer_time");
-                                char *c_timer_time = cJSON_GetStringValue(timer_time);
+                                        gui_set_timer_time(hour, minute, second);
+                                    }
 
-                                if (c_timer_time) {
-                                    int hour, minute, second;
-                                    sscanf(c_timer_time, "%d:%d:%d", &hour, &minute, &second);
-
-                                    gui_set_timer_time(hour, minute, second);
-                                }
-
-                                if (relay_get_status()) {
-                                    led_set_mode(1);
                                     gui_set_mode(GUI_MODE_IDX_TIMER);
-                                }
-                            } else {
-                                if (relay_get_status()) {
+                                } else {
                                     relay_set_status(0);
 
                                     ESP_LOGW(TAG, "relay is off");
 
-                                    led_set_mode(1);
                                     gui_set_mode(GUI_MODE_IDX_QR_CODE);
                                     audio_player_play_file(0);
                                 }
-                            }
+                            } else {
+                                if (cJSON_IsTrue(status)) {
+                                    cJSON *token = cJSON_GetObjectItemCaseSensitive(root, "token");
+                                    char *c_token = cJSON_GetStringValue(token);
 
-                            led_set_mode(1);
+                                    if (c_token) {
+                                        ESP_LOGW(TAG, "token: %s", c_token);
+                                        strncpy(token_string, c_token, sizeof(token_string)-1);
+                                    }
+                                }
 
-                            if (!relay_get_status()) {
-                                if (!strncmp(http_app_get_token(), "CCCC", 4)) {
+                                if (!strncmp(http_app_get_token(), "\x43", 1)) {
+                                    ESP_LOGW(TAG, "no device token available");
                                     gui_set_mode(6);
                                 } else {
                                     gui_set_mode(GUI_MODE_IDX_QR_CODE);
                                 }
                             }
+
+                            led_set_mode(1);
+
                             break;
                         case HTTP_REQ_IDX_OFF:
                             relay_set_status(0);
 
                             ESP_LOGW(TAG, "relay is off");
 
-                            led_set_mode(1);
                             gui_set_mode(GUI_MODE_IDX_QR_CODE);
                             audio_player_play_file(0);
+
+                            led_set_mode(1);
+
                             break;
                         case HTTP_REQ_IDX_ON:
                             if (cJSON_IsTrue(status)) {
@@ -141,14 +140,15 @@ esp_err_t http_app_status_event_handler(esp_http_client_event_t *evt)
 
                                 ESP_LOGW(TAG, "relay is on");
 
-                                led_set_mode(1);
                                 gui_set_mode(GUI_MODE_IDX_TIMER);
                                 audio_player_play_file(1);
                             } else {
-                                led_set_mode(1);
                                 gui_set_mode(GUI_MODE_IDX_QR_CODE);
                                 audio_player_play_file(2);
                             }
+
+                            led_set_mode(1);
+
                             break;
                         default:
                             break;
@@ -166,7 +166,7 @@ esp_err_t http_app_status_event_handler(esp_http_client_event_t *evt)
         EventBits_t uxBits = xEventGroupGetBits(user_event_group);
         if (uxBits & HTTP_APP_STATUS_FAILED_BIT) {
             if (!relay_get_status()) {
-                if (!strncmp(http_app_get_token(), "CCCC", 4)) {
+                if (!strncmp(http_app_get_token(), "\x43", 1)) {
                     gui_set_mode(6);
                 } else {
                     gui_set_mode(GUI_MODE_IDX_QR_CODE);
@@ -203,6 +203,10 @@ void http_app_update_status(http_req_t req)
 {
     req_code = req;
 
+    if (!strlen(token_string)) {
+        memset(token_string, 0x43, sizeof(token_string)-1);
+    }
+
     EventBits_t uxBits = xEventGroupSync(
         user_event_group,
         HTTP_APP_STATUS_RUN_BIT,
@@ -211,9 +215,5 @@ void http_app_update_status(http_req_t req)
     );
     if ((uxBits & HTTP_APP_STATUS_READY_BIT) == 0) {
         xEventGroupClearBits(user_event_group, HTTP_APP_STATUS_RUN_BIT);
-    }
-
-    if (strlen(token_string) == 0) {
-        memset(token_string, 0x43, sizeof(token_string)-1);
     }
 }
