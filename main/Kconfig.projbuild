@@ -1,4 +1,4 @@
-menu "Laboratory Power Manager"
+menu "Lab Equipment Manager"
 
 menu "Server Configuration"
 config SERVER_URL
@@ -48,7 +48,7 @@ config WIFI_PASSWORD
 
 config WIFI_HOSTNAME_PREFIX
     string "WiFi Hostname Prefix"
-    default "LPM"
+    default "LEM"
     help
         WiFi hostname prefix for the device to use.
 

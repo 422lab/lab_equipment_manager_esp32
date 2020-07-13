@@ -1,7 +1,7 @@
-Laboratory Power Manager
-========================
+Lab Equipment Manager
+=====================
 
-Laboratory Power Manager based on ESP32 chip.
+Lab Equipment Manager based on ESP32 chip.
 
 ## Main Features
 
@@ -15,7 +15,7 @@ Laboratory Power Manager based on ESP32 chip.
 ### Obtain the source
 
 ```
-git clone --recursive https://github.com/redchenjs/laboratory_power_manager_esp32.git
+git clone --recursive https://github.com/redchenjs/lab_equipment_manager_esp32.git
 ```
 
 ### Update an existing repository
@@ -46,7 +46,7 @@ source ./esp-idf/export.sh
 idf.py menuconfig
 ```
 
-* All project configurations are under the `Laboratory Power Manager` menu.
+* All project configurations are under the `Lab Equipment Manager` menu.
 
 ### Flash & Monitor
 
