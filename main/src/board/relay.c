@@ -17,7 +17,7 @@ void relay_set_status(bool status)
 {
     relay_status = status;
 
-    if (status) {
+    if (relay_status) {
 #ifdef CONFIG_RELAY_PIN_ACTIVE_LOW
         gpio_set_level(CONFIG_RELAY_PIN, 0);
 #else
@@ -39,6 +39,8 @@ bool relay_get_status(void)
 
 void relay_init(void)
 {
+    relay_set_status(false);
+
     gpio_config_t io_conf = {
         .pin_bit_mask = BIT64(CONFIG_RELAY_PIN),
         .mode = GPIO_MODE_OUTPUT,
@@ -47,8 +49,6 @@ void relay_init(void)
         .intr_type = GPIO_INTR_DISABLE,
     };
     gpio_config(&io_conf);
-
-    relay_set_status(false);
 
     ESP_LOGI(TAG, "initialized, pin: %d", CONFIG_RELAY_PIN);
 }
