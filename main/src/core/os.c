@@ -26,37 +26,22 @@
 
 #define OS_SC_TAG "os_sc"
 
-EventGroupHandle_t os_event_group;
+EventGroupHandle_t wifi_event_group;
 EventGroupHandle_t user_event_group;
 
 static void wifi_event_handler(void* arg, esp_event_base_t event_base,
                                int32_t event_id, void* event_data)
 {
     switch (event_id) {
-        case WIFI_EVENT_STA_START: {
-            EventBits_t uxBits = xEventGroupGetBits(os_event_group);
-            if (!(uxBits & WIFI_CONFIG_BIT)) {
-                gui_set_mode(0);
-                ESP_ERROR_CHECK(esp_wifi_connect());
-            }
+        case WIFI_EVENT_STA_START:
+            ESP_ERROR_CHECK(esp_wifi_connect());
             break;
-        }
         case WIFI_EVENT_STA_CONNECTED:
-            ESP_ERROR_CHECK(tcpip_adapter_set_hostname(TCPIP_ADAPTER_IF_STA, wifi_hostname));
             break;
-        case WIFI_EVENT_STA_DISCONNECTED: {
-            EventBits_t uxBits = xEventGroupGetBits(os_event_group);
-            if (uxBits & WIFI_READY_BIT) {
-                gui_set_mode(4);
-                vTaskDelay(2000 / portTICK_RATE_MS);
-                esp_restart();
-            }
-            if (!(uxBits & WIFI_CONFIG_BIT)) {
-                ESP_ERROR_CHECK(esp_wifi_connect());
-            }
-            xEventGroupClearBits(os_event_group, WIFI_READY_BIT);
+        case WIFI_EVENT_STA_DISCONNECTED:
+            xEventGroupClearBits(wifi_event_group, WIFI_READY_BIT);
+            ESP_ERROR_CHECK(esp_wifi_connect());
             break;
-        }
         default:
             break;
     }
@@ -66,16 +51,12 @@ static void ip_event_handler(void* arg, esp_event_base_t event_base,
                              int32_t event_id, void* event_data)
 {
     switch (event_id) {
-        case IP_EVENT_STA_GOT_IP: {
-            xEventGroupSetBits(os_event_group, WIFI_READY_BIT);
-            xEventGroupClearBits(user_event_group, KEY_SCAN_RUN_BIT);
+        case IP_EVENT_STA_GOT_IP:
+            xEventGroupSetBits(wifi_event_group, WIFI_READY_BIT);
             ntp_sync_time();
-#ifdef CONFIG_ENABLE_OTA
-            http_app_check_for_updates();
-#endif
-            http_app_update_status(HTTP_REQ_IDX_UPD);
             break;
-        }
+        case IP_EVENT_STA_LOST_IP:
+            break;
         default:
             break;
     }
@@ -84,13 +65,6 @@ static void ip_event_handler(void* arg, esp_event_base_t event_base,
 static void sc_event_handler(void* arg, esp_event_base_t event_base,
                              int32_t event_id, void* event_data)
 {
-    static wifi_config_t wifi_config = {
-        .sta = {
-            .scan_method = WIFI_ALL_CHANNEL_SCAN,
-            .sort_method = WIFI_CONNECT_AP_BY_SIGNAL,
-            .threshold.authmode = WIFI_AUTH_WPA2_PSK
-        },
-    };
     switch (event_id) {
         case SC_EVENT_SCAN_DONE:
             ESP_LOGI(OS_SC_TAG, "scan done");
@@ -110,7 +84,7 @@ static void sc_event_handler(void* arg, esp_event_base_t event_base,
                 memcpy(wifi_config.sta.bssid, evt->bssid, sizeof(wifi_config.sta.bssid));
             }
             ESP_LOGI(OS_SC_TAG, "ssid: %s", wifi_config.sta.ssid);
-            ESP_LOGI(OS_SC_TAG, "password: %s", wifi_config.sta.password);
+            ESP_LOGI(OS_SC_TAG, "pswd: %s", wifi_config.sta.password);
 
             ESP_ERROR_CHECK(esp_wifi_disconnect());
             ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_STA, &wifi_config));
@@ -119,7 +93,7 @@ static void sc_event_handler(void* arg, esp_event_base_t event_base,
         case SC_EVENT_SEND_ACK_DONE:
             ESP_LOGI(OS_SC_TAG, "ack done");
             esp_smartconfig_stop();
-            xEventGroupClearBits(os_event_group, WIFI_CONFIG_BIT);
+            xEventGroupClearBits(wifi_event_group, WIFI_CONFIG_BIT);
             break;
         default:
             break;
@@ -128,9 +102,10 @@ static void sc_event_handler(void* arg, esp_event_base_t event_base,
 
 void os_init(void)
 {
-    os_event_group = xEventGroupCreate();
+    wifi_event_group = xEventGroupCreate();
     user_event_group = xEventGroupCreate();
 
+    ESP_ERROR_CHECK(esp_netif_init());
     ESP_ERROR_CHECK(esp_event_loop_create_default());
 
     ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &wifi_event_handler, NULL));

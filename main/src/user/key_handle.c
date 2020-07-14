@@ -26,10 +26,8 @@
 #ifdef CONFIG_ENABLE_SC_KEY
 void sc_key_handle(void)
 {
-    xEventGroupClearBits(user_event_group, KEY_SCAN_RUN_BIT);
-
     ESP_LOGI(SC_KEY_TAG, "start smartconfig");
-    xEventGroupSetBits(os_event_group, WIFI_CONFIG_BIT);
+    xEventGroupSetBits(wifi_event_group, WIFI_CONFIG_BIT);
 
     led_set_mode(5);
     gui_set_mode(7);
@@ -45,14 +43,12 @@ void sc_key_handle(void)
 
 void pwr_key_handle(void)
 {
-    xEventGroupClearBits(user_event_group, KEY_SCAN_RUN_BIT);
-
     if (relay_get_status()) {
-        ESP_LOGI(PWR_KEY_TAG, "power off");
+        ESP_LOGW(PWR_KEY_TAG, "power off");
 
         http_app_update_status(HTTP_REQ_IDX_OFF);
     } else {
-        ESP_LOGI(PWR_KEY_TAG, "power on");
+        ESP_LOGW(PWR_KEY_TAG, "power on");
 
         http_app_update_status(HTTP_REQ_IDX_ON);
     }

@@ -94,6 +94,9 @@ static void key_task(void *pvParameter)
             if (gpio_get_level(gpio_pin[i]) == gpio_val[i]) {
                 if (++count[i] == gpio_hold[i] / 10) {
                     count[i] = 0;
+
+                    xEventGroupClearBits(user_event_group, KEY_SCAN_RUN_BIT);
+
                     key_handle[i]();
                 }
             } else {

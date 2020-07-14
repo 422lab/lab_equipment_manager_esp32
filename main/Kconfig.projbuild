@@ -147,7 +147,7 @@ endmenu
 menu "Key Configuration"
 config PWR_KEY_HOLD_TIME
     int "Power Key Hold Time (ms)"
-    default 500
+    default 50
 
 choice PWR_KEY_ACTIVE_LEVEL
     prompt "Power Key Active Level"

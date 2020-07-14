@@ -38,6 +38,8 @@ static void http_app_task(void *pvParameter)
             portMAX_DELAY
         );
 
+        xEventGroupClearBits(user_event_group, KEY_SCAN_RUN_BIT);
+
         led_set_mode(4);
         gui_set_mode(1);
 
@@ -80,16 +82,31 @@ static void http_app_task(void *pvParameter)
         if (err != ESP_OK) {
             ESP_LOGE(TAG, "error perform http(s) request %s", esp_err_to_name(err));
             if (config.event_handler != http_app_ota_event_handler) {
-                if (!relay_get_status()) {
+                if (relay_get_status()) {
+                    if (http_app_get_code() == HTTP_REQ_IDX_OFF) {
+                        relay_set_status(0);
+
+                        ESP_LOGW(TAG, "relay is off");
+
+                        gui_set_mode(GUI_MODE_IDX_QR_CODE);
+                        audio_player_play_file(0);
+                    } else {
+                        gui_set_mode(GUI_MODE_IDX_TIMER);
+                    }
+                } else {
                     if (!strncmp(http_app_get_token(), "\x43", 1)) {
                         gui_set_mode(6);
                     } else {
                         gui_set_mode(GUI_MODE_IDX_QR_CODE);
                     }
                 }
+
+                led_set_mode(3);
             }
         }
         esp_http_client_cleanup(client);
+
+        vTaskDelay(2000 / portTICK_RATE_MS);
 
         if (uxBits & HTTP_APP_STATUS_RUN_BIT) {
             xEventGroupSetBits(user_event_group, HTTP_APP_STATUS_READY_BIT);
@@ -98,8 +115,6 @@ static void http_app_task(void *pvParameter)
             xEventGroupSetBits(user_event_group, HTTP_APP_OTA_READY_BIT);
             xEventGroupClearBits(user_event_group, HTTP_APP_OTA_RUN_BIT);
         }
-
-        vTaskDelay(2000 / portTICK_RATE_MS);
 
         xEventGroupSetBits(user_event_group, KEY_SCAN_RUN_BIT);
     }

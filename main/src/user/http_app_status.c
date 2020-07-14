@@ -24,8 +24,9 @@
 
 #define TAG "http_app_status"
 
+static bool response = false;
 static char token_string[33] = {0};
-static http_req_t req_code = HTTP_REQ_IDX_UPD;
+static req_code_t req_code = HTTP_REQ_IDX_UPD;
 
 esp_err_t http_app_status_event_handler(esp_http_client_event_t *evt)
 {
@@ -39,22 +40,19 @@ esp_err_t http_app_status_event_handler(esp_http_client_event_t *evt)
     case HTTP_EVENT_ON_HEADER:
         break;
     case HTTP_EVENT_ON_DATA: {
-        cJSON *root    = NULL;
-        cJSON *request = NULL;
-        cJSON *status  = NULL;
-        http_req_t req = 0;
+        cJSON *root = NULL;
         if (evt->data_len) {
+            response = true;
+
             root = cJSON_Parse(evt->data);
-            if (cJSON_HasObjectItem(root, "request")) {
-                request = cJSON_GetObjectItemCaseSensitive(root, "request");
-                status  = cJSON_GetObjectItemCaseSensitive(root, "status");
+            if (cJSON_HasObjectItem(root, "code")) {
+                cJSON *code = cJSON_GetObjectItemCaseSensitive(root, "code");
+                cJSON *status = cJSON_GetObjectItemCaseSensitive(root, "status");
 
-                if (cJSON_IsNumber(request)) {
-                    req = request->valuedouble;
+                if (cJSON_IsNumber(code)) {
+                    ESP_LOGW(TAG, "code: %d, status: %d", (int)code->valuedouble, cJSON_IsTrue(status));
 
-                    ESP_LOGW(TAG, "req: %d, sta: %d", req, cJSON_IsTrue(status));
-
-                    switch (req) {
+                    switch ((int)code->valuedouble) {
                         case HTTP_REQ_IDX_UPD:
                             if (relay_get_status()) {
                                 if (cJSON_IsTrue(status)) {
@@ -65,14 +63,14 @@ esp_err_t http_app_status_event_handler(esp_http_client_event_t *evt)
                                         gui_set_user_info(c_user_info);
                                     }
 
-                                    cJSON *timer_time = cJSON_GetObjectItemCaseSensitive(root, "timer_time");
-                                    char *c_timer_time = cJSON_GetStringValue(timer_time);
+                                    cJSON *expire_time = cJSON_GetObjectItemCaseSensitive(root, "expire_time");
+                                    char *c_expire_time = cJSON_GetStringValue(expire_time);
 
-                                    if (c_timer_time) {
+                                    if (c_expire_time) {
                                         int hour, minute, second;
-                                        sscanf(c_timer_time, "%d:%d:%d", &hour, &minute, &second);
+                                        sscanf(c_expire_time, "%d:%d:%d", &hour, &minute, &second);
 
-                                        gui_set_timer_time(hour, minute, second);
+                                        gui_set_expire_time(hour, minute, second);
                                     }
 
                                     gui_set_mode(GUI_MODE_IDX_TIMER);
@@ -126,14 +124,14 @@ esp_err_t http_app_status_event_handler(esp_http_client_event_t *evt)
                                     gui_set_user_info(c_user_info);
                                 }
 
-                                cJSON *timer_time = cJSON_GetObjectItemCaseSensitive(root, "timer_time");
-                                char *c_timer_time = cJSON_GetStringValue(timer_time);
+                                cJSON *expire_time = cJSON_GetObjectItemCaseSensitive(root, "expire_time");
+                                char *c_expire_time = cJSON_GetStringValue(expire_time);
 
-                                if (c_timer_time) {
+                                if (c_expire_time) {
                                     int hour, minute, second;
-                                    sscanf(c_timer_time, "%d:%d:%d", &hour, &minute, &second);
+                                    sscanf(c_expire_time, "%d:%d:%d", &hour, &minute, &second);
 
-                                    gui_set_timer_time(hour, minute, second);
+                                    gui_set_expire_time(hour, minute, second);
                                 }
 
                                 relay_set_status(1);
@@ -151,8 +149,13 @@ esp_err_t http_app_status_event_handler(esp_http_client_event_t *evt)
 
                             break;
                         default:
+                            ESP_LOGE(TAG, "invalid code");
+                            xEventGroupSetBits(user_event_group, HTTP_APP_STATUS_FAILED_BIT);
                             break;
                     }
+                } else {
+                    ESP_LOGE(TAG, "invalid code format");
+                    xEventGroupSetBits(user_event_group, HTTP_APP_STATUS_FAILED_BIT);
                 }
             } else {
                 ESP_LOGE(TAG, "invalid response");
@@ -163,15 +166,33 @@ esp_err_t http_app_status_event_handler(esp_http_client_event_t *evt)
         break;
     }
     case HTTP_EVENT_ON_FINISH: {
+        if (!response) {
+            ESP_LOGE(TAG, "null response");
+            xEventGroupSetBits(user_event_group, HTTP_APP_STATUS_FAILED_BIT);
+        }
+
         EventBits_t uxBits = xEventGroupGetBits(user_event_group);
         if (uxBits & HTTP_APP_STATUS_FAILED_BIT) {
-            if (!relay_get_status()) {
+            if (relay_get_status()) {
+                if (http_app_get_code() == HTTP_REQ_IDX_OFF) {
+                    relay_set_status(0);
+
+                    ESP_LOGW(TAG, "relay is off");
+
+                    gui_set_mode(GUI_MODE_IDX_QR_CODE);
+                    audio_player_play_file(0);
+                } else {
+                    gui_set_mode(GUI_MODE_IDX_TIMER);
+                }
+            } else {
                 if (!strncmp(http_app_get_token(), "\x43", 1)) {
                     gui_set_mode(6);
                 } else {
                     gui_set_mode(GUI_MODE_IDX_QR_CODE);
                 }
             }
+
+            led_set_mode(2);
         }
         break;
     }
@@ -187,9 +208,9 @@ void http_app_status_prepare_data(char *buf, int len)
 {
     cJSON *root = NULL;
     root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "request", req_code);
+    cJSON_AddNumberToObject(root, "code", req_code);
     cJSON_AddStringToObject(root, "status", relay_get_status() ? "on" : "off");
-    cJSON_AddStringToObject(root, "mac", wifi_mac_string);
+    cJSON_AddStringToObject(root, "wifi_mac", wifi_mac_string);
     cJSON_PrintPreallocated(root, buf, len, 0);
     cJSON_Delete(root);
 }
@@ -199,21 +220,59 @@ char *http_app_get_token(void)
     return token_string;
 }
 
-void http_app_update_status(http_req_t req)
+req_code_t http_app_get_code(void)
 {
-    req_code = req;
+    return req_code;
+}
+
+void http_app_update_status(req_code_t code)
+{
+    EventBits_t uxBits = xEventGroupGetBits(user_event_group);
+    if (uxBits & HTTP_APP_STATUS_RUN_BIT) {
+        ESP_LOGW(TAG, "app is running");
+        return;
+    }
+
+    uxBits = xEventGroupGetBits(wifi_event_group);
+    if (!(uxBits & WIFI_READY_BIT)) {
+        ESP_LOGW(TAG, "network is down");
+
+        if (relay_get_status()) {
+            if (code == HTTP_REQ_IDX_OFF) {
+                relay_set_status(0);
+
+                ESP_LOGW(TAG, "relay is off");
+
+                gui_set_mode(GUI_MODE_IDX_QR_CODE);
+                audio_player_play_file(0);
+            }
+        } else {
+            if (code == HTTP_REQ_IDX_ON) {
+                audio_player_play_file(5);
+            }
+        }
+
+        vTaskDelay(2000 / portTICK_RATE_MS);
+
+        xEventGroupSetBits(user_event_group, KEY_SCAN_RUN_BIT);
+
+        return;
+    }
+
+    req_code = code;
+    response = false;
 
     if (!strlen(token_string)) {
         memset(token_string, 0x43, sizeof(token_string)-1);
     }
 
-    EventBits_t uxBits = xEventGroupSync(
+    uxBits = xEventGroupSync(
         user_event_group,
         HTTP_APP_STATUS_RUN_BIT,
         HTTP_APP_STATUS_READY_BIT,
         30000 / portTICK_RATE_MS
     );
-    if ((uxBits & HTTP_APP_STATUS_READY_BIT) == 0) {
+    if (!(uxBits & HTTP_APP_STATUS_READY_BIT)) {
         xEventGroupClearBits(user_event_group, HTTP_APP_STATUS_RUN_BIT);
     }
 }

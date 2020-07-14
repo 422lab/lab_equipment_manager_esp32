@@ -14,6 +14,7 @@
 
 #include "user/gui.h"
 #include "user/led.h"
+#include "user/audio_player.h"
 #include "user/http_app_ota.h"
 #include "user/http_app_status.h"
 
@@ -37,6 +38,10 @@ static void ntp_time_sync_notification_cb(struct timeval *tv)
 
 static void ntp_task(void *pvParameter)
 {
+    portTickType xLastWakeTime;
+    const int retry_count = 15;
+    const int update_sec = esp_random() % 30 + 30;
+
     xEventGroupWaitBits(
         user_event_group,
         NTP_RUN_BIT,
@@ -44,6 +49,8 @@ static void ntp_task(void *pvParameter)
         pdFALSE,
         portMAX_DELAY
     );
+
+    xEventGroupClearBits(user_event_group, KEY_SCAN_RUN_BIT);
 
     led_set_mode(2);
     gui_set_mode(5);
@@ -60,11 +67,10 @@ static void ntp_task(void *pvParameter)
     ESP_LOGI(TAG, "started.");
 
     int retry = 1;
-    const int retry_count = 15;
-
     while (sntp_get_sync_status() == SNTP_SYNC_STATUS_RESET) {
+        xLastWakeTime = xTaskGetTickCount();
+
         ESP_LOGW(TAG, "waiting for system time to be set... (%d/%d)", retry, retry_count);
-        vTaskDelay(1000 / portTICK_RATE_MS);
 
         if (++retry > retry_count) {
             ESP_LOGE(TAG, "time sync timeout");
@@ -74,25 +80,57 @@ static void ntp_task(void *pvParameter)
 
             esp_restart();
         }
+
+        vTaskDelayUntil(&xLastWakeTime, 1000 / portTICK_RATE_MS);
     }
 
-    while (1) {
-        vTaskDelay(60000 / portTICK_RATE_MS);
+#ifdef CONFIG_ENABLE_OTA
+    http_app_check_for_updates();
+#endif
 
-        http_app_update_status(HTTP_REQ_IDX_UPD);
+    http_app_update_status(HTTP_REQ_IDX_UPD);
+
+    while (1) {
+        xLastWakeTime = xTaskGetTickCount();
+
+        time(&now);
+        localtime_r(&now, &timeinfo);
+
+        switch (gui_get_mode()) {
+            case GUI_MODE_IDX_TIMER: {
+                uint32_t remaining = gui_get_remaining_time();
+
+                if (remaining / 60 <= 4 && remaining % 60 == 15) {
+                    audio_player_play_file(0);
+                }
+
+                if (remaining == 0) {
+                    http_app_update_status(HTTP_REQ_IDX_OFF);
+                } else if (remaining % 60 == update_sec) {
+                    http_app_update_status(HTTP_REQ_IDX_UPD);
+                }
+
+                break;
+            }
+            case GUI_MODE_IDX_QR_CODE:
+                if (timeinfo.tm_sec == update_sec) {
+                    http_app_update_status(HTTP_REQ_IDX_UPD);
+                }
+
+                break;
+            default:
+                break;
+        }
+
+        vTaskDelayUntil(&xLastWakeTime, 1000 / portTICK_RATE_MS);
     }
 }
 
 void ntp_sync_time(void)
 {
     EventBits_t uxBits = xEventGroupGetBits(user_event_group);
-    if ((uxBits & NTP_READY_BIT) == 0) {
-        xEventGroupSync(
-            user_event_group,
-            NTP_RUN_BIT,
-            NTP_READY_BIT,
-            portMAX_DELAY
-        );
+    if (!(uxBits & NTP_READY_BIT)) {
+        xEventGroupSetBits(user_event_group, NTP_RUN_BIT);
     }
 }
 

@@ -11,31 +11,31 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/event_groups.h"
 
-typedef enum os_event_group_bits {
+typedef enum wifi_event_group_bits {
     WIFI_READY_BIT  = BIT0,
     WIFI_CONFIG_BIT = BIT1,
-} os_event_group_bits_t;
+} wifi_event_group_bits_t;
 
 typedef enum user_event_group_bits {
     NTP_RUN_BIT   = BIT0,
     NTP_READY_BIT = BIT1,
 
-    GUI_RELOAD_BIT     = BIT2,
-    KEY_SCAN_RUN_BIT   = BIT4,
+    GUI_RELOAD_BIT   = BIT2,
+    KEY_SCAN_RUN_BIT = BIT3,
 
-    AUDIO_PLAYER_RUN_BIT  = BIT5,
-    AUDIO_PLAYER_IDLE_BIT = BIT6,
+    AUDIO_PLAYER_RUN_BIT  = BIT4,
+    AUDIO_PLAYER_IDLE_BIT = BIT5,
 
-    HTTP_APP_OTA_RUN_BIT    = BIT7,
-    HTTP_APP_OTA_READY_BIT  = BIT8,
-    HTTP_APP_OTA_FAILED_BIT = BIT9,
+    HTTP_APP_OTA_RUN_BIT    = BIT6,
+    HTTP_APP_OTA_READY_BIT  = BIT7,
+    HTTP_APP_OTA_FAILED_BIT = BIT8,
 
-    HTTP_APP_STATUS_RUN_BIT    = BIT10,
-    HTTP_APP_STATUS_READY_BIT  = BIT11,
-    HTTP_APP_STATUS_FAILED_BIT = BIT12
+    HTTP_APP_STATUS_RUN_BIT    = BIT9,
+    HTTP_APP_STATUS_READY_BIT  = BIT10,
+    HTTP_APP_STATUS_FAILED_BIT = BIT11,
 } user_event_group_bits_t;
 
-extern EventGroupHandle_t os_event_group;
+extern EventGroupHandle_t wifi_event_group;
 extern EventGroupHandle_t user_event_group;
 
 extern void os_init(void);

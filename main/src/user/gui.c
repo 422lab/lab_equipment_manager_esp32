@@ -16,7 +16,6 @@
 
 #include "core/os.h"
 #include "user/gui.h"
-#include "user/audio_player.h"
 #include "user/http_app_status.h"
 
 #define TAG "gui"
@@ -43,29 +42,38 @@ static GTimer gui_flush_timer;
 static uint8_t gui_mode = 0;
 static uint8_t gui_backlight = 255;
 
+static time_t now = 0;
+static struct tm timeinfo = {0};
+
 static char u_info[11] = {0};
 
 static uint8_t t_hour = 0;
 static uint8_t t_min  = 0;
 static uint8_t t_sec  = 0;
-
-static uint8_t l_hour = 0;
-static uint8_t l_min  = 0;
-static uint8_t l_sec  = 0;
+static int32_t t_rem  = 0;
 
 void printQr(const uint8_t qrcode[])
 {
+    uint32_t bg_color = White;
     int size = qrcodegen_getSize(qrcode);
     int border = 2;
 
-    gdispGClear(gui_gdisp, White);
+    EventBits_t uxBits = xEventGroupGetBits(wifi_event_group);
+    if (!(uxBits & WIFI_READY_BIT)) {
+        bg_color = Silver;
+    } else {
+        bg_color = White;
+    }
+
+    gdispGClear(gui_gdisp, bg_color);
+    gdispGSetBacklight(gui_gdisp, gui_backlight);
 
     for (int y=-border; y<size+border; y++) {
         for (int x=-border; x<size+border; x++) {
             if (qrcodegen_getModule(qrcode, x, y)) {
                 gdispGFillArea(gui_gdisp, x*5+59, y*5+5, 5, 5, Black);
             } else {
-                gdispGFillArea(gui_gdisp, x*5+59, y*5+5, 5, 5, White);
+                gdispGFillArea(gui_gdisp, x*5+59, y*5+5, 5, 5, bg_color);
             }
         }
     }
@@ -154,24 +162,29 @@ static void gui_task(void *pvParameter)
             xLastWakeTime = xTaskGetTickCount();
 
             gdispGClear(gui_gdisp, Black);
-
-            time_t now = 0;
-            struct tm timeinfo = {0};
+            gdispGSetBacklight(gui_gdisp, gui_backlight);
 
             time(&now);
             localtime_r(&now, &timeinfo);
 
-            int64_t left_time = t_hour * 3600 + t_min * 60 + t_sec -
-                                timeinfo.tm_hour * 3600 - timeinfo.tm_min * 60 - timeinfo.tm_sec;
-            if (left_time <= 0) {
-                left_time = 0;
+            t_rem = t_hour * 3600 + t_min * 60 + t_sec -
+                    timeinfo.tm_hour * 3600 - timeinfo.tm_min * 60 - timeinfo.tm_sec;
+            if (t_rem <= 0) {
+                t_rem = 0;
             }
-            l_hour = left_time / 3600;
-            l_min  = left_time / 60 % 60;
-            l_sec  = left_time % 60;
 
-            snprintf(text_buff, sizeof(text_buff), "(%10s)", u_info);
-            gdispGFillStringBox(gui_gdisp, 2, 2, 236, 32, text_buff, gui_font, Yellow, Black, justifyCenter);
+            uint8_t r_hour = t_rem / 3600;
+            uint8_t r_min  = t_rem / 60 % 60;
+            uint8_t r_sec  = t_rem % 60;
+
+            EventBits_t uxBits = xEventGroupGetBits(wifi_event_group);
+            if (!(uxBits & WIFI_READY_BIT)) {
+                snprintf(text_buff, sizeof(text_buff), "(%10s)", u_info);
+                gdispGFillStringBox(gui_gdisp, 2, 2, 236, 32, text_buff, gui_font, Silver, Black, justifyCenter);
+            } else {
+                snprintf(text_buff, sizeof(text_buff), "(%10s)", u_info);
+                gdispGFillStringBox(gui_gdisp, 2, 2, 236, 32, text_buff, gui_font, Yellow, Black, justifyCenter);
+            }
 
             snprintf(text_buff, sizeof(text_buff), "T-N:");
             gdispGFillStringBox(gui_gdisp, 2, 34, 86, 32, text_buff, gui_font, Cyan, Black, justifyLeft);
@@ -179,54 +192,37 @@ static void gui_task(void *pvParameter)
             snprintf(text_buff, sizeof(text_buff), "%02d:%02d:%02d", timeinfo.tm_hour, timeinfo.tm_min, timeinfo.tm_sec);
             gdispGFillStringBox(gui_gdisp, 88, 34, 150, 32, text_buff, gui_font, Cyan, Black, justifyRight);
 
-            snprintf(text_buff, sizeof(text_buff), "T-R:");
+            snprintf(text_buff, sizeof(text_buff), "T-E:");
             gdispGFillStringBox(gui_gdisp, 2, 67, 86, 32, text_buff, gui_font, Magenta, Black, justifyLeft);
 
             snprintf(text_buff, sizeof(text_buff), "%02d:%02d:%02d", t_hour, t_min, t_sec);
             gdispGFillStringBox(gui_gdisp, 88, 67, 150, 32, text_buff, gui_font, Magenta, Black, justifyRight);
 
-            if (l_hour <= 0 && l_min <= 4) {
-                snprintf(text_buff, sizeof(text_buff), "T-L:");
+            if (r_hour <= 0 && r_min <= 4) {
+                snprintf(text_buff, sizeof(text_buff), "T-R:");
                 gdispGFillStringBox(gui_gdisp, 2, 100, 86, 32, text_buff, gui_font, Orange, Black, justifyLeft);
 
-                snprintf(text_buff, sizeof(text_buff), "%02d:%02d:%02d", l_hour, l_min, l_sec);
+                snprintf(text_buff, sizeof(text_buff), "%02d:%02d:%02d", r_hour, r_min, r_sec);
                 gdispGFillStringBox(gui_gdisp, 88, 100, 150, 32, text_buff, gui_font, Orange, Black, justifyRight);
-
-                if (l_sec == 5) {
-                    audio_player_play_file(0);
-                }
             } else {
-                snprintf(text_buff, sizeof(text_buff), "T-L:");
+                snprintf(text_buff, sizeof(text_buff), "T-R:");
                 gdispGFillStringBox(gui_gdisp, 2, 100, 86, 32, text_buff, gui_font, Lime, Black, justifyLeft);
 
-                snprintf(text_buff, sizeof(text_buff), "%02d:%02d:%02d", l_hour, l_min, l_sec);
+                snprintf(text_buff, sizeof(text_buff), "%02d:%02d:%02d", r_hour, r_min, r_sec);
                 gdispGFillStringBox(gui_gdisp, 88, 100, 150, 32, text_buff, gui_font, Lime, Black, justifyRight);
             }
 
-            gdispGSetBacklight(gui_gdisp, gui_backlight);
-
             gtimerJab(&gui_flush_timer);
-
-            if (l_hour <= 0 && l_min <= 0 && l_sec <= 0) {
-                http_app_update_status(HTTP_REQ_IDX_OFF);
-            }
 
             vTaskDelayUntil(&xLastWakeTime, 1000 / portTICK_RATE_MS);
 
             break;
         case GUI_MODE_IDX_QR_CODE:
+            xLastWakeTime = xTaskGetTickCount();
+
             qrcode_encode(http_app_get_token());
 
-            gdispGSetBacklight(gui_gdisp, gui_backlight);
-
-            xEventGroupWaitBits(
-                user_event_group,
-                GUI_RELOAD_BIT,
-                pdTRUE,
-                pdFALSE,
-                portMAX_DELAY
-            );
-
+            vTaskDelayUntil(&xLastWakeTime, 1000 / portTICK_RATE_MS);
             break;
         case GUI_MODE_IDX_PAUSE:
             xEventGroupWaitBits(
@@ -267,13 +263,18 @@ void gui_set_user_info(const char *u_i)
     ESP_LOGI(TAG, "user info: %s", u_info);
 }
 
-void gui_set_timer_time(int t_h, int t_m, int t_s)
+void gui_set_expire_time(int t_h, int t_m, int t_s)
 {
     t_hour = t_h;
     t_min  = t_m;
     t_sec  = t_s;
 
-    ESP_LOGI(TAG, "timer time: %02d:%02d:%02d", t_hour, t_min, t_sec);
+    ESP_LOGI(TAG, "expire time: %02d:%02d:%02d", t_hour, t_min, t_sec);
+}
+
+uint32_t gui_get_remaining_time(void)
+{
+    return t_rem;
 }
 
 void gui_set_mode(uint8_t idx)

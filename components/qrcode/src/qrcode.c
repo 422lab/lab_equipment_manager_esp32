@@ -23,7 +23,7 @@ extern void printQr(const uint8_t qrcode[]);
 
 esp_err_t qrcode_encode(const char *text)
 {
-	enum qrcodegen_Ecc errCorLvl = qrcodegen_Ecc_LOW;
+    enum qrcodegen_Ecc errCorLvl = qrcodegen_Ecc_LOW;
     uint8_t *qrcode, *tempBuffer;
     esp_err_t err = ESP_FAIL;
 
@@ -37,11 +37,11 @@ esp_err_t qrcode_encode(const char *text)
         return ESP_ERR_NO_MEM;
     }
 
-	// Make and print the QR Code symbol
-	bool ok = qrcodegen_encodeText(text, tempBuffer, qrcode, errCorLvl,
-		qrcodegen_VERSION_MIN, MAX_QRCODE_VERSION, qrcodegen_Mask_AUTO, true);
-	if (ok) {
-		printQr(qrcode);
+    // Make and print the QR Code symbol
+    bool ok = qrcodegen_encodeText(text, tempBuffer, qrcode, errCorLvl,
+        qrcodegen_VERSION_MIN, MAX_QRCODE_VERSION, qrcodegen_Mask_AUTO, true);
+    if (ok) {
+        printQr(qrcode);
         err = ESP_OK;
     }
 

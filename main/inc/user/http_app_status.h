@@ -14,12 +14,14 @@ typedef enum {
     HTTP_REQ_IDX_UPD = 100,
     HTTP_REQ_IDX_OFF = 101,
     HTTP_REQ_IDX_ON  = 102,
-} http_req_t;
+} req_code_t;
 
 extern esp_err_t http_app_status_event_handler(esp_http_client_event_t *evt);
 extern void http_app_status_prepare_data(char *buf, int len);
 
 extern char *http_app_get_token(void);
-extern void http_app_update_status(http_req_t req);
+extern req_code_t http_app_get_code(void);
+
+extern void http_app_update_status(req_code_t code);
 
 #endif /* INC_USER_HTTP_APP_STATUS_H_ */
