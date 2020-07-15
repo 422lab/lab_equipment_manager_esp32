@@ -15,6 +15,7 @@
 #include "qrcode.h"
 
 #include "core/os.h"
+#include "user/man.h"
 #include "user/gui.h"
 #include "user/http_app_status.h"
 
@@ -41,16 +42,6 @@ static GTimer gui_flush_timer;
 
 static uint8_t gui_mode = 0;
 static uint8_t gui_backlight = 255;
-
-static time_t now = 0;
-static struct tm timeinfo = {0};
-
-static char u_info[11] = {0};
-
-static uint8_t t_hour = 0;
-static uint8_t t_min  = 0;
-static uint8_t t_sec  = 0;
-static int32_t t_rem  = 0;
 
 void printQr(const uint8_t qrcode[])
 {
@@ -159,70 +150,68 @@ static void gui_task(void *pvParameter)
             break;
         }
         case GUI_MODE_IDX_TIMER:
-            xLastWakeTime = xTaskGetTickCount();
-
             gdispGClear(gui_gdisp, Black);
             gdispGSetBacklight(gui_gdisp, gui_backlight);
 
-            time(&now);
-            localtime_r(&now, &timeinfo);
-
-            t_rem = t_hour * 3600 + t_min * 60 + t_sec -
-                    timeinfo.tm_hour * 3600 - timeinfo.tm_min * 60 - timeinfo.tm_sec;
-            if (t_rem <= 0) {
-                t_rem = 0;
-            }
-
-            uint8_t r_hour = t_rem / 3600;
-            uint8_t r_min  = t_rem / 60 % 60;
-            uint8_t r_sec  = t_rem % 60;
+            man_info_t *info = man_get_info();
 
             EventBits_t uxBits = xEventGroupGetBits(wifi_event_group);
             if (!(uxBits & WIFI_READY_BIT)) {
-                snprintf(text_buff, sizeof(text_buff), "(%10s)", u_info);
+                snprintf(text_buff, sizeof(text_buff), "(%10s)", info->u_info);
                 gdispGFillStringBox(gui_gdisp, 2, 2, 236, 32, text_buff, gui_font, Silver, Black, justifyCenter);
             } else {
-                snprintf(text_buff, sizeof(text_buff), "(%10s)", u_info);
+                snprintf(text_buff, sizeof(text_buff), "(%10s)", info->u_info);
                 gdispGFillStringBox(gui_gdisp, 2, 2, 236, 32, text_buff, gui_font, Yellow, Black, justifyCenter);
             }
 
             snprintf(text_buff, sizeof(text_buff), "T-N:");
             gdispGFillStringBox(gui_gdisp, 2, 34, 86, 32, text_buff, gui_font, Cyan, Black, justifyLeft);
 
-            snprintf(text_buff, sizeof(text_buff), "%02d:%02d:%02d", timeinfo.tm_hour, timeinfo.tm_min, timeinfo.tm_sec);
+            snprintf(text_buff, sizeof(text_buff), "%02d:%02d:%02d", info->n_hour, info->n_min, info->n_sec);
             gdispGFillStringBox(gui_gdisp, 88, 34, 150, 32, text_buff, gui_font, Cyan, Black, justifyRight);
 
             snprintf(text_buff, sizeof(text_buff), "T-E:");
             gdispGFillStringBox(gui_gdisp, 2, 67, 86, 32, text_buff, gui_font, Magenta, Black, justifyLeft);
 
-            snprintf(text_buff, sizeof(text_buff), "%02d:%02d:%02d", t_hour, t_min, t_sec);
+            snprintf(text_buff, sizeof(text_buff), "%02d:%02d:%02d", info->e_hour, info->e_min, info->e_sec);
             gdispGFillStringBox(gui_gdisp, 88, 67, 150, 32, text_buff, gui_font, Magenta, Black, justifyRight);
 
-            if (r_hour <= 0 && r_min <= 4) {
+            if (info->r_hour <= 0 && info->r_min <= 4) {
                 snprintf(text_buff, sizeof(text_buff), "T-R:");
                 gdispGFillStringBox(gui_gdisp, 2, 100, 86, 32, text_buff, gui_font, Orange, Black, justifyLeft);
 
-                snprintf(text_buff, sizeof(text_buff), "%02d:%02d:%02d", r_hour, r_min, r_sec);
+                snprintf(text_buff, sizeof(text_buff), "%02d:%02d:%02d", info->r_hour, info->r_min, info->r_sec);
                 gdispGFillStringBox(gui_gdisp, 88, 100, 150, 32, text_buff, gui_font, Orange, Black, justifyRight);
             } else {
                 snprintf(text_buff, sizeof(text_buff), "T-R:");
                 gdispGFillStringBox(gui_gdisp, 2, 100, 86, 32, text_buff, gui_font, Lime, Black, justifyLeft);
 
-                snprintf(text_buff, sizeof(text_buff), "%02d:%02d:%02d", r_hour, r_min, r_sec);
+                snprintf(text_buff, sizeof(text_buff), "%02d:%02d:%02d", info->r_hour, info->r_min, info->r_sec);
                 gdispGFillStringBox(gui_gdisp, 88, 100, 150, 32, text_buff, gui_font, Lime, Black, justifyRight);
             }
 
             gtimerJab(&gui_flush_timer);
 
-            vTaskDelayUntil(&xLastWakeTime, 1000 / portTICK_RATE_MS);
+            xEventGroupWaitBits(
+                user_event_group,
+                GUI_RELOAD_BIT,
+                pdTRUE,
+                pdFALSE,
+                portMAX_DELAY
+            );
 
             break;
         case GUI_MODE_IDX_QR_CODE:
-            xLastWakeTime = xTaskGetTickCount();
+            qrcode_encode(man_get_token());
 
-            qrcode_encode(http_app_get_token());
+            xEventGroupWaitBits(
+                user_event_group,
+                GUI_RELOAD_BIT,
+                pdTRUE,
+                pdFALSE,
+                portMAX_DELAY
+            );
 
-            vTaskDelayUntil(&xLastWakeTime, 1000 / portTICK_RATE_MS);
             break;
         case GUI_MODE_IDX_PAUSE:
             xEventGroupWaitBits(
@@ -254,27 +243,6 @@ static void gui_task(void *pvParameter)
             break;
         }
     }
-}
-
-void gui_set_user_info(const char *u_i)
-{
-    strncpy(u_info, u_i, sizeof(u_info)-1);
-
-    ESP_LOGI(TAG, "user info: %s", u_info);
-}
-
-void gui_set_expire_time(int t_h, int t_m, int t_s)
-{
-    t_hour = t_h;
-    t_min  = t_m;
-    t_sec  = t_s;
-
-    ESP_LOGI(TAG, "expire time: %02d:%02d:%02d", t_hour, t_min, t_sec);
-}
-
-uint32_t gui_get_remaining_time(void)
-{
-    return t_rem;
 }
 
 void gui_set_mode(uint8_t idx)

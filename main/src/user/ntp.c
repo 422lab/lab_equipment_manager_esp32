@@ -11,12 +11,8 @@
 #include "esp_sntp.h"
 
 #include "core/os.h"
-
 #include "user/gui.h"
 #include "user/led.h"
-#include "user/audio_player.h"
-#include "user/http_app_ota.h"
-#include "user/http_app_status.h"
 
 #define TAG "ntp"
 
@@ -39,8 +35,7 @@ static void ntp_time_sync_notification_cb(struct timeval *tv)
 static void ntp_task(void *pvParameter)
 {
     portTickType xLastWakeTime;
-    const int retry_count = 15;
-    const int update_sec = esp_random() % 30 + 30;
+    const int retry_count = 30;
 
     xEventGroupWaitBits(
         user_event_group,
@@ -84,46 +79,9 @@ static void ntp_task(void *pvParameter)
         vTaskDelayUntil(&xLastWakeTime, 1000 / portTICK_RATE_MS);
     }
 
-#ifdef CONFIG_ENABLE_OTA
-    http_app_check_for_updates();
-#endif
+    xEventGroupSetBits(user_event_group, MAN_RUN_BIT);
 
-    http_app_update_status(HTTP_REQ_IDX_UPD);
-
-    while (1) {
-        xLastWakeTime = xTaskGetTickCount();
-
-        time(&now);
-        localtime_r(&now, &timeinfo);
-
-        switch (gui_get_mode()) {
-            case GUI_MODE_IDX_TIMER: {
-                uint32_t remaining = gui_get_remaining_time();
-
-                if (remaining / 60 <= 4 && remaining % 60 == 15) {
-                    audio_player_play_file(0);
-                }
-
-                if (remaining == 0) {
-                    http_app_update_status(HTTP_REQ_IDX_OFF);
-                } else if (remaining % 60 == update_sec) {
-                    http_app_update_status(HTTP_REQ_IDX_UPD);
-                }
-
-                break;
-            }
-            case GUI_MODE_IDX_QR_CODE:
-                if (timeinfo.tm_sec == update_sec) {
-                    http_app_update_status(HTTP_REQ_IDX_UPD);
-                }
-
-                break;
-            default:
-                break;
-        }
-
-        vTaskDelayUntil(&xLastWakeTime, 1000 / portTICK_RATE_MS);
-    }
+    vTaskDelete(NULL);
 }
 
 void ntp_sync_time(void)

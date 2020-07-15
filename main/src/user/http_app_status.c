@@ -17,6 +17,7 @@
 #include "chip/wifi.h"
 #include "board/relay.h"
 
+#include "user/man.h"
 #include "user/gui.h"
 #include "user/led.h"
 #include "user/audio_player.h"
@@ -25,7 +26,6 @@
 #define TAG "http_app_status"
 
 static bool response = false;
-static char token_string[33] = {0};
 static req_code_t req_code = HTTP_REQ_IDX_UPD;
 
 esp_err_t http_app_status_event_handler(esp_http_client_event_t *evt)
@@ -60,7 +60,7 @@ esp_err_t http_app_status_event_handler(esp_http_client_event_t *evt)
                                     char *c_user_info = cJSON_GetStringValue(user_info);
 
                                     if (c_user_info) {
-                                        gui_set_user_info(c_user_info);
+                                        man_set_user_info(c_user_info);
                                     }
 
                                     cJSON *expire_time = cJSON_GetObjectItemCaseSensitive(root, "expire_time");
@@ -70,7 +70,7 @@ esp_err_t http_app_status_event_handler(esp_http_client_event_t *evt)
                                         int hour, minute, second;
                                         sscanf(c_expire_time, "%d:%d:%d", &hour, &minute, &second);
 
-                                        gui_set_expire_time(hour, minute, second);
+                                        man_set_exp_time(hour, minute, second);
                                     }
 
                                     gui_set_mode(GUI_MODE_IDX_TIMER);
@@ -88,13 +88,11 @@ esp_err_t http_app_status_event_handler(esp_http_client_event_t *evt)
                                     char *c_token = cJSON_GetStringValue(token);
 
                                     if (c_token) {
-                                        ESP_LOGW(TAG, "token: %s", c_token);
-                                        strncpy(token_string, c_token, sizeof(token_string)-1);
+                                        man_set_token(c_token);
                                     }
                                 }
 
-                                if (!strncmp(http_app_get_token(), "\x43", 1)) {
-                                    ESP_LOGW(TAG, "no device token available");
+                                if (*man_get_token() == 0x00) {
                                     gui_set_mode(6);
                                 } else {
                                     gui_set_mode(GUI_MODE_IDX_QR_CODE);
@@ -121,7 +119,7 @@ esp_err_t http_app_status_event_handler(esp_http_client_event_t *evt)
                                 char *c_user_info = cJSON_GetStringValue(user_info);
 
                                 if (c_user_info) {
-                                    gui_set_user_info(c_user_info);
+                                    man_set_user_info(c_user_info);
                                 }
 
                                 cJSON *expire_time = cJSON_GetObjectItemCaseSensitive(root, "expire_time");
@@ -131,7 +129,7 @@ esp_err_t http_app_status_event_handler(esp_http_client_event_t *evt)
                                     int hour, minute, second;
                                     sscanf(c_expire_time, "%d:%d:%d", &hour, &minute, &second);
 
-                                    gui_set_expire_time(hour, minute, second);
+                                    man_set_exp_time(hour, minute, second);
                                 }
 
                                 relay_set_status(1);
@@ -185,7 +183,7 @@ esp_err_t http_app_status_event_handler(esp_http_client_event_t *evt)
                     gui_set_mode(GUI_MODE_IDX_TIMER);
                 }
             } else {
-                if (!strncmp(http_app_get_token(), "\x43", 1)) {
+                if (*man_get_token() == 0x00) {
                     gui_set_mode(6);
                 } else {
                     gui_set_mode(GUI_MODE_IDX_QR_CODE);
@@ -213,11 +211,6 @@ void http_app_status_prepare_data(char *buf, int len)
     cJSON_AddStringToObject(root, "wifi_mac", wifi_mac_string);
     cJSON_PrintPreallocated(root, buf, len, 0);
     cJSON_Delete(root);
-}
-
-char *http_app_get_token(void)
-{
-    return token_string;
 }
 
 req_code_t http_app_get_code(void)
@@ -252,7 +245,7 @@ void http_app_update_status(req_code_t code)
             }
         }
 
-        vTaskDelay(2000 / portTICK_RATE_MS);
+        vTaskDelay(1000 / portTICK_RATE_MS);
 
         xEventGroupSetBits(user_event_group, KEY_SCAN_RUN_BIT);
 
@@ -261,10 +254,6 @@ void http_app_update_status(req_code_t code)
 
     req_code = code;
     response = false;
-
-    if (!strlen(token_string)) {
-        memset(token_string, 0x43, sizeof(token_string)-1);
-    }
 
     uxBits = xEventGroupSync(
         user_event_group,

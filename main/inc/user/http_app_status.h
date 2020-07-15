@@ -19,7 +19,6 @@ typedef enum {
 extern esp_err_t http_app_status_event_handler(esp_http_client_event_t *evt);
 extern void http_app_status_prepare_data(char *buf, int len);
 
-extern char *http_app_get_token(void);
 extern req_code_t http_app_get_code(void);
 
 extern void http_app_update_status(req_code_t code);

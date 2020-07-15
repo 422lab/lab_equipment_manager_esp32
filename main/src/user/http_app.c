@@ -14,6 +14,7 @@
 #include "chip/wifi.h"
 #include "board/relay.h"
 
+#include "user/man.h"
 #include "user/gui.h"
 #include "user/led.h"
 #include "user/http_app.h"
@@ -94,7 +95,7 @@ static void http_app_task(void *pvParameter)
                         gui_set_mode(GUI_MODE_IDX_TIMER);
                     }
                 } else {
-                    if (!strncmp(http_app_get_token(), "\x43", 1)) {
+                    if (*man_get_token() == 0x00) {
                         gui_set_mode(6);
                     } else {
                         gui_set_mode(GUI_MODE_IDX_QR_CODE);
@@ -106,7 +107,7 @@ static void http_app_task(void *pvParameter)
         }
         esp_http_client_cleanup(client);
 
-        vTaskDelay(2000 / portTICK_RATE_MS);
+        vTaskDelay(1000 / portTICK_RATE_MS);
 
         if (uxBits & HTTP_APP_STATUS_RUN_BIT) {
             xEventGroupSetBits(user_event_group, HTTP_APP_STATUS_READY_BIT);

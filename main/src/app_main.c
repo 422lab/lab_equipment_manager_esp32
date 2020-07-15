@@ -16,6 +16,7 @@
 #include "board/relay.h"
 
 #include "user/ntp.h"
+#include "user/man.h"
 #include "user/led.h"
 #include "user/gui.h"
 #include "user/key.h"
@@ -50,6 +51,8 @@ static void board_init(void)
 static void user_init(void)
 {
     ntp_init();
+
+    man_init();
 
     http_app_init();
 

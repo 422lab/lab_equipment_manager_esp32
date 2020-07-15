@@ -48,10 +48,6 @@ extern const char ani7_240x135_gif_end[] asm("_binary_ani7_240x135_gif_end");
 extern const char ani8_240x135_gif_ptr[] asm("_binary_ani8_240x135_gif_start");
 extern const char ani8_240x135_gif_end[] asm("_binary_ani8_240x135_gif_end");
 
-extern void gui_set_user_info(const char *u_i);
-extern void gui_set_expire_time(int t_h, int t_m, int t_s);
-extern uint32_t gui_get_remaining_time(void);
-
 extern void gui_set_mode(uint8_t idx);
 extern uint8_t gui_get_mode(void);
 
