@@ -39,7 +39,7 @@ static void wifi_event_handler(void* arg, esp_event_base_t event_base,
         case WIFI_EVENT_STA_CONNECTED:
             break;
         case WIFI_EVENT_STA_DISCONNECTED:
-            xEventGroupClearBits(wifi_event_group, WIFI_READY_BIT);
+            xEventGroupClearBits(wifi_event_group, WIFI_RDY_BIT);
             ESP_ERROR_CHECK(esp_wifi_connect());
             break;
         default:
@@ -52,7 +52,7 @@ static void ip_event_handler(void* arg, esp_event_base_t event_base,
 {
     switch (event_id) {
         case IP_EVENT_STA_GOT_IP:
-            xEventGroupSetBits(wifi_event_group, WIFI_READY_BIT);
+            xEventGroupSetBits(wifi_event_group, WIFI_RDY_BIT);
             ntp_sync_time();
             break;
         case IP_EVENT_STA_LOST_IP:
@@ -93,7 +93,7 @@ static void sc_event_handler(void* arg, esp_event_base_t event_base,
         case SC_EVENT_SEND_ACK_DONE:
             ESP_LOGI(OS_SC_TAG, "ack done");
             esp_smartconfig_stop();
-            xEventGroupClearBits(wifi_event_group, WIFI_CONFIG_BIT);
+            xEventGroupClearBits(wifi_event_group, WIFI_CFG_BIT);
             break;
         default:
             break;

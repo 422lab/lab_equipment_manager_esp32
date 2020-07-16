@@ -106,7 +106,7 @@ esp_err_t http_app_ota_event_handler(esp_http_client_event_t *evt)
         break;
     default:
 exit:
-        xEventGroupSetBits(user_event_group, HTTP_APP_OTA_FAILED_BIT);
+        xEventGroupSetBits(user_event_group, HTTP_APP_OTA_FAIL_BIT);
         break;
     }
     return ESP_OK;
@@ -130,10 +130,10 @@ void http_app_check_for_updates(void)
     EventBits_t uxBits = xEventGroupSync(
         user_event_group,
         HTTP_APP_OTA_RUN_BIT,
-        HTTP_APP_OTA_READY_BIT,
+        HTTP_APP_OTA_RDY_BIT,
         60000 / portTICK_RATE_MS
     );
-    if (!(uxBits & HTTP_APP_OTA_READY_BIT)) {
+    if (!(uxBits & HTTP_APP_OTA_RDY_BIT)) {
         xEventGroupClearBits(user_event_group, HTTP_APP_OTA_RUN_BIT);
     }
 

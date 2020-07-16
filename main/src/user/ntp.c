@@ -16,12 +16,12 @@
 
 #define TAG "ntp"
 
-static time_t now = 0;
-static struct tm timeinfo = {0};
-static char strftime_buf[64];
-
 static void ntp_time_sync_notification_cb(struct timeval *tv)
 {
+    time_t now = 0;
+    struct tm timeinfo = {0};
+    char strftime_buf[64] = {0};
+
     time(&now);
     localtime_r(&now, &timeinfo);
     strftime(strftime_buf, sizeof(strftime_buf), "%c", &timeinfo);
@@ -29,7 +29,7 @@ static void ntp_time_sync_notification_cb(struct timeval *tv)
     ESP_LOGW(TAG, "current timezone: %s", CONFIG_NTP_TIMEZONE);
     ESP_LOGW(TAG, "current date/time: %s", strftime_buf);
 
-    xEventGroupSetBits(user_event_group, NTP_READY_BIT);
+    xEventGroupSetBits(user_event_group, NTP_RDY_BIT);
 }
 
 static void ntp_task(void *pvParameter)
@@ -45,7 +45,7 @@ static void ntp_task(void *pvParameter)
         portMAX_DELAY
     );
 
-    xEventGroupClearBits(user_event_group, KEY_SCAN_RUN_BIT);
+    xEventGroupClearBits(user_event_group, KEY_RUN_BIT);
 
     led_set_mode(2);
     gui_set_mode(5);
@@ -87,7 +87,7 @@ static void ntp_task(void *pvParameter)
 void ntp_sync_time(void)
 {
     EventBits_t uxBits = xEventGroupGetBits(user_event_group);
-    if (!(uxBits & NTP_READY_BIT)) {
+    if (!(uxBits & NTP_RDY_BIT)) {
         xEventGroupSetBits(user_event_group, NTP_RUN_BIT);
     }
 }

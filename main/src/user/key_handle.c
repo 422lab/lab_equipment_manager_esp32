@@ -27,7 +27,7 @@
 void sc_key_handle(void)
 {
     ESP_LOGI(SC_KEY_TAG, "start smartconfig");
-    xEventGroupSetBits(wifi_event_group, WIFI_CONFIG_BIT);
+    xEventGroupSetBits(wifi_event_group, WIFI_CFG_BIT);
 
     led_set_mode(5);
     gui_set_mode(7);

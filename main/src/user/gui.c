@@ -50,7 +50,7 @@ void printQr(const uint8_t qrcode[])
     int border = 2;
 
     EventBits_t uxBits = xEventGroupGetBits(wifi_event_group);
-    if (!(uxBits & WIFI_READY_BIT)) {
+    if (!(uxBits & WIFI_RDY_BIT)) {
         bg_color = Silver;
     } else {
         bg_color = White;
@@ -117,8 +117,8 @@ static void gui_task(void *pvParameter)
                 while (1) {
                     xLastWakeTime = xTaskGetTickCount();
 
-                    if (xEventGroupGetBits(user_event_group) & GUI_RELOAD_BIT) {
-                        xEventGroupClearBits(user_event_group, GUI_RELOAD_BIT);
+                    if (xEventGroupGetBits(user_event_group) & GUI_RLD_BIT) {
+                        xEventGroupClearBits(user_event_group, GUI_RLD_BIT);
                         break;
                     }
 
@@ -156,7 +156,7 @@ static void gui_task(void *pvParameter)
             man_info_t *info = man_get_info();
 
             EventBits_t uxBits = xEventGroupGetBits(wifi_event_group);
-            if (!(uxBits & WIFI_READY_BIT)) {
+            if (!(uxBits & WIFI_RDY_BIT)) {
                 snprintf(text_buff, sizeof(text_buff), "(%10s)", info->u_info);
                 gdispGFillStringBox(gui_gdisp, 2, 2, 236, 32, text_buff, gui_font, Silver, Black, justifyCenter);
             } else {
@@ -192,23 +192,27 @@ static void gui_task(void *pvParameter)
 
             gtimerJab(&gui_flush_timer);
 
+            xEventGroupSetBits(user_event_group, GUI_DONE_BIT);
             xEventGroupWaitBits(
                 user_event_group,
-                GUI_RELOAD_BIT,
+                GUI_RLD_BIT | GUI_DONE_BIT,
                 pdTRUE,
-                pdFALSE,
+                pdTRUE,
                 portMAX_DELAY
             );
 
             break;
         case GUI_MODE_IDX_QR_CODE:
+            man_get_info();
+
             qrcode_encode(man_get_token());
 
+            xEventGroupSetBits(user_event_group, GUI_DONE_BIT);
             xEventGroupWaitBits(
                 user_event_group,
-                GUI_RELOAD_BIT,
+                GUI_RLD_BIT | GUI_DONE_BIT,
                 pdTRUE,
-                pdFALSE,
+                pdTRUE,
                 portMAX_DELAY
             );
 
@@ -216,7 +220,7 @@ static void gui_task(void *pvParameter)
         case GUI_MODE_IDX_PAUSE:
             xEventGroupWaitBits(
                 user_event_group,
-                GUI_RELOAD_BIT,
+                GUI_RLD_BIT,
                 pdTRUE,
                 pdFALSE,
                 portMAX_DELAY
@@ -234,7 +238,7 @@ static void gui_task(void *pvParameter)
 
             xEventGroupWaitBits(
                 user_event_group,
-                GUI_RELOAD_BIT,
+                GUI_RLD_BIT,
                 pdTRUE,
                 pdFALSE,
                 portMAX_DELAY
@@ -249,7 +253,7 @@ void gui_set_mode(uint8_t idx)
 {
     gui_mode = idx;
 
-    xEventGroupSetBits(user_event_group, GUI_RELOAD_BIT);
+    xEventGroupSetBits(user_event_group, GUI_RLD_BIT);
 
     ESP_LOGI(TAG, "mode: 0x%02X", gui_mode);
 }

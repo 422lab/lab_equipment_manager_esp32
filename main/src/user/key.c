@@ -82,7 +82,7 @@ static void key_task(void *pvParameter)
     while (1) {
         xEventGroupWaitBits(
             user_event_group,
-            KEY_SCAN_RUN_BIT,
+            KEY_RUN_BIT,
             pdFALSE,
             pdFALSE,
             portMAX_DELAY
@@ -95,7 +95,7 @@ static void key_task(void *pvParameter)
                 if (++count[i] == gpio_hold[i] / 10) {
                     count[i] = 0;
 
-                    xEventGroupClearBits(user_event_group, KEY_SCAN_RUN_BIT);
+                    xEventGroupClearBits(user_event_group, KEY_RUN_BIT);
 
                     key_handle[i]();
                 }
@@ -110,7 +110,7 @@ static void key_task(void *pvParameter)
 
 void key_init(void)
 {
-    xEventGroupSetBits(user_event_group, KEY_SCAN_RUN_BIT);
+    xEventGroupSetBits(user_event_group, KEY_RUN_BIT);
 
     xTaskCreatePinnedToCore(key_task, "keyT", 1280, NULL, 5, NULL, 1);
 }

@@ -39,7 +39,7 @@ static void http_app_task(void *pvParameter)
             portMAX_DELAY
         );
 
-        xEventGroupClearBits(user_event_group, KEY_SCAN_RUN_BIT);
+        xEventGroupClearBits(user_event_group, KEY_RUN_BIT);
 
         led_set_mode(4);
         gui_set_mode(1);
@@ -64,14 +64,14 @@ static void http_app_task(void *pvParameter)
             http_app_status_prepare_data(post_data, sizeof(post_data));
             xEventGroupClearBits(
                 user_event_group,
-                HTTP_APP_STATUS_FAILED_BIT | HTTP_APP_STATUS_READY_BIT
+                HTTP_APP_STATUS_FAIL_BIT | HTTP_APP_STATUS_RDY_BIT
             );
         } else {
             config.event_handler = http_app_ota_event_handler;
             http_app_ota_prepare_data(post_data, sizeof(post_data));
             xEventGroupClearBits(
                 user_event_group,
-                HTTP_APP_OTA_FAILED_BIT | HTTP_APP_OTA_READY_BIT
+                HTTP_APP_OTA_FAIL_BIT | HTTP_APP_OTA_RDY_BIT
             );
         }
         esp_http_client_handle_t client = esp_http_client_init(&config);
@@ -110,14 +110,14 @@ static void http_app_task(void *pvParameter)
         vTaskDelay(1000 / portTICK_RATE_MS);
 
         if (uxBits & HTTP_APP_STATUS_RUN_BIT) {
-            xEventGroupSetBits(user_event_group, HTTP_APP_STATUS_READY_BIT);
+            xEventGroupSetBits(user_event_group, HTTP_APP_STATUS_RDY_BIT);
             xEventGroupClearBits(user_event_group, HTTP_APP_STATUS_RUN_BIT);
         } else {
-            xEventGroupSetBits(user_event_group, HTTP_APP_OTA_READY_BIT);
+            xEventGroupSetBits(user_event_group, HTTP_APP_OTA_RDY_BIT);
             xEventGroupClearBits(user_event_group, HTTP_APP_OTA_RUN_BIT);
         }
 
-        xEventGroupSetBits(user_event_group, KEY_SCAN_RUN_BIT);
+        xEventGroupSetBits(user_event_group, KEY_RUN_BIT);
     }
 }
 

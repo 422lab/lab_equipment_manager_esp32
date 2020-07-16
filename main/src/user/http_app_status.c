@@ -148,16 +148,16 @@ esp_err_t http_app_status_event_handler(esp_http_client_event_t *evt)
                             break;
                         default:
                             ESP_LOGE(TAG, "invalid code");
-                            xEventGroupSetBits(user_event_group, HTTP_APP_STATUS_FAILED_BIT);
+                            xEventGroupSetBits(user_event_group, HTTP_APP_STATUS_FAIL_BIT);
                             break;
                     }
                 } else {
                     ESP_LOGE(TAG, "invalid code format");
-                    xEventGroupSetBits(user_event_group, HTTP_APP_STATUS_FAILED_BIT);
+                    xEventGroupSetBits(user_event_group, HTTP_APP_STATUS_FAIL_BIT);
                 }
             } else {
                 ESP_LOGE(TAG, "invalid response");
-                xEventGroupSetBits(user_event_group, HTTP_APP_STATUS_FAILED_BIT);
+                xEventGroupSetBits(user_event_group, HTTP_APP_STATUS_FAIL_BIT);
             }
             cJSON_Delete(root);
         }
@@ -166,11 +166,11 @@ esp_err_t http_app_status_event_handler(esp_http_client_event_t *evt)
     case HTTP_EVENT_ON_FINISH: {
         if (!response) {
             ESP_LOGE(TAG, "null response");
-            xEventGroupSetBits(user_event_group, HTTP_APP_STATUS_FAILED_BIT);
+            xEventGroupSetBits(user_event_group, HTTP_APP_STATUS_FAIL_BIT);
         }
 
         EventBits_t uxBits = xEventGroupGetBits(user_event_group);
-        if (uxBits & HTTP_APP_STATUS_FAILED_BIT) {
+        if (uxBits & HTTP_APP_STATUS_FAIL_BIT) {
             if (relay_get_status()) {
                 if (http_app_get_code() == HTTP_REQ_IDX_OFF) {
                     relay_set_status(0);
@@ -227,7 +227,7 @@ void http_app_update_status(req_code_t code)
     }
 
     uxBits = xEventGroupGetBits(wifi_event_group);
-    if (!(uxBits & WIFI_READY_BIT)) {
+    if (!(uxBits & WIFI_RDY_BIT)) {
         ESP_LOGW(TAG, "network is down");
 
         if (relay_get_status()) {
@@ -247,7 +247,7 @@ void http_app_update_status(req_code_t code)
 
         vTaskDelay(1000 / portTICK_RATE_MS);
 
-        xEventGroupSetBits(user_event_group, KEY_SCAN_RUN_BIT);
+        xEventGroupSetBits(user_event_group, KEY_RUN_BIT);
 
         return;
     }
@@ -258,10 +258,10 @@ void http_app_update_status(req_code_t code)
     uxBits = xEventGroupSync(
         user_event_group,
         HTTP_APP_STATUS_RUN_BIT,
-        HTTP_APP_STATUS_READY_BIT,
+        HTTP_APP_STATUS_RDY_BIT,
         30000 / portTICK_RATE_MS
     );
-    if (!(uxBits & HTTP_APP_STATUS_READY_BIT)) {
+    if (!(uxBits & HTTP_APP_STATUS_RDY_BIT)) {
         xEventGroupClearBits(user_event_group, HTTP_APP_STATUS_RUN_BIT);
     }
 }
