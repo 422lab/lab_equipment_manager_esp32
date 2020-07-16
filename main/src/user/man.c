@@ -20,7 +20,7 @@
 
 #define TAG "man"
 
-static uint32_t t_rem = 0;
+static int32_t t_rem = 0;
 static man_info_t info = {0};
 static struct tm timeinfo = {0};
 
