@@ -95,11 +95,7 @@ static void http_app_task(void *pvParameter)
                         gui_set_mode(GUI_MODE_IDX_TIMER);
                     }
                 } else {
-                    if (*man_get_token() == 0x00) {
-                        gui_set_mode(GUI_MODE_IDX_GIF_ERR);
-                    } else {
-                        gui_set_mode(GUI_MODE_IDX_QR_CODE);
-                    }
+                    gui_set_mode(GUI_MODE_IDX_QR_CODE);
                 }
 
                 led_set_mode(3);

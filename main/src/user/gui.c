@@ -203,6 +203,11 @@ static void gui_task(void *pvParameter)
 
             break;
         case GUI_MODE_IDX_QR_CODE:
+            if (*man_get_token() == 0x00) {
+                gui_mode = GUI_MODE_IDX_GIF_ERR;
+                break;
+            }
+
             qrcode_encode(man_get_token());
 
             xEventGroupWaitBits(

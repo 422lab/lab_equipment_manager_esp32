@@ -92,11 +92,7 @@ esp_err_t http_app_status_event_handler(esp_http_client_event_t *evt)
                                     }
                                 }
 
-                                if (*man_get_token() == 0x00) {
-                                    gui_set_mode(GUI_MODE_IDX_GIF_ERR);
-                                } else {
-                                    gui_set_mode(GUI_MODE_IDX_QR_CODE);
-                                }
+                                gui_set_mode(GUI_MODE_IDX_QR_CODE);
                             }
 
                             led_set_mode(1);
@@ -183,11 +179,7 @@ esp_err_t http_app_status_event_handler(esp_http_client_event_t *evt)
                     gui_set_mode(GUI_MODE_IDX_TIMER);
                 }
             } else {
-                if (*man_get_token() == 0x00) {
-                    gui_set_mode(GUI_MODE_IDX_GIF_ERR);
-                } else {
-                    gui_set_mode(GUI_MODE_IDX_QR_CODE);
-                }
+                gui_set_mode(GUI_MODE_IDX_QR_CODE);
             }
 
             led_set_mode(2);
