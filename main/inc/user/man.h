@@ -32,7 +32,7 @@ extern void man_set_user_info(const char *u_info);
 extern void man_set_exp_time(int hour, int min, int sec);
 
 extern char *man_get_token(void);
-extern man_info_t *man_get_info(void);
+extern man_info_t *man_update_info(void);
 
 extern void man_init(void);
 

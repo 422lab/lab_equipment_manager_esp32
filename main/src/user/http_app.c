@@ -42,7 +42,7 @@ static void http_app_task(void *pvParameter)
         xEventGroupClearBits(user_event_group, KEY_RUN_BIT);
 
         led_set_mode(4);
-        gui_set_mode(1);
+        gui_set_mode(GUI_MODE_IDX_GIF_BUSY);
 
         memset(&config, 0, sizeof(config));
         memset(post_data, 0, sizeof(post_data));
@@ -96,7 +96,7 @@ static void http_app_task(void *pvParameter)
                     }
                 } else {
                     if (*man_get_token() == 0x00) {
-                        gui_set_mode(6);
+                        gui_set_mode(GUI_MODE_IDX_GIF_ERR);
                     } else {
                         gui_set_mode(GUI_MODE_IDX_QR_CODE);
                     }

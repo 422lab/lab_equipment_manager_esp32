@@ -11,6 +11,18 @@
 #include <stdint.h>
 
 typedef enum {
+    GUI_MODE_IDX_GIF_WIFI = 0x00,
+    GUI_MODE_IDX_GIF_BUSY = 0x01,
+    GUI_MODE_IDX_GIF_DONE = 0x02,
+    GUI_MODE_IDX_GIF_NFC  = 0x03,
+    GUI_MODE_IDX_GIF_PWR  = 0x04,
+    GUI_MODE_IDX_GIF_CLK  = 0x05,
+    GUI_MODE_IDX_GIF_ERR  = 0x06,
+    GUI_MODE_IDX_GIF_CFG  = 0x07,
+    GUI_MODE_IDX_GIF_UPD  = 0x08,
+
+    GUI_MODE_IDX_GIF_MAX  = 0x10,
+
     GUI_MODE_IDX_TIMER   = 0xEE,
     GUI_MODE_IDX_QR_CODE = 0xEF,
 

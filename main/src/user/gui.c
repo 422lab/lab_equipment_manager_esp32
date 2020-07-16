@@ -98,15 +98,15 @@ static void gui_task(void *pvParameter)
 
     while (1) {
         switch (gui_mode) {
-        case 0x00:
-        case 0x01:
-        case 0x02:
-        case 0x03:
-        case 0x04:
-        case 0x05:
-        case 0x06:
-        case 0x07:
-        case 0x08: {
+        case GUI_MODE_IDX_GIF_WIFI:
+        case GUI_MODE_IDX_GIF_BUSY:
+        case GUI_MODE_IDX_GIF_DONE:
+        case GUI_MODE_IDX_GIF_NFC:
+        case GUI_MODE_IDX_GIF_PWR:
+        case GUI_MODE_IDX_GIF_CLK:
+        case GUI_MODE_IDX_GIF_ERR:
+        case GUI_MODE_IDX_GIF_CFG:
+        case GUI_MODE_IDX_GIF_UPD: {
             gdispImage gfx_image;
 
             if (!(gdispImageOpenMemory(&gfx_image, img_file_ptr[gui_mode][0]) & GDISP_IMAGE_ERR_UNRECOVERABLE)) {
@@ -153,7 +153,7 @@ static void gui_task(void *pvParameter)
             gdispGClear(gui_gdisp, Black);
             gdispGSetBacklight(gui_gdisp, gui_backlight);
 
-            man_info_t *info = man_get_info();
+            man_info_t *info = man_update_info();
 
             EventBits_t uxBits = xEventGroupGetBits(wifi_event_group);
             if (!(uxBits & WIFI_RDY_BIT)) {
@@ -195,24 +195,21 @@ static void gui_task(void *pvParameter)
             xEventGroupSetBits(user_event_group, GUI_DONE_BIT);
             xEventGroupWaitBits(
                 user_event_group,
-                GUI_RLD_BIT | GUI_DONE_BIT,
+                GUI_RLD_BIT,
                 pdTRUE,
-                pdTRUE,
+                pdFALSE,
                 portMAX_DELAY
             );
 
             break;
         case GUI_MODE_IDX_QR_CODE:
-            man_get_info();
-
             qrcode_encode(man_get_token());
 
-            xEventGroupSetBits(user_event_group, GUI_DONE_BIT);
             xEventGroupWaitBits(
                 user_event_group,
-                GUI_RLD_BIT | GUI_DONE_BIT,
+                GUI_RLD_BIT,
                 pdTRUE,
-                pdTRUE,
+                pdFALSE,
                 portMAX_DELAY
             );
 

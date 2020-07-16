@@ -30,7 +30,7 @@ void sc_key_handle(void)
     xEventGroupSetBits(wifi_event_group, WIFI_CFG_BIT);
 
     led_set_mode(5);
-    gui_set_mode(7);
+    gui_set_mode(GUI_MODE_IDX_GIF_CFG);
     audio_player_play_file(7);
 
     ESP_ERROR_CHECK(esp_wifi_disconnect());

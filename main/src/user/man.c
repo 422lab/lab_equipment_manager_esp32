@@ -49,11 +49,24 @@ static void man_task(void *pvParameter)
         xLastWakeTime = xTaskGetTickCount();
 
         switch (gui_get_mode()) {
+            case GUI_MODE_IDX_GIF_ERR:
+            case GUI_MODE_IDX_QR_CODE:
+                man_update_info();
+
+                if (timeinfo.tm_sec == update_sec) {
+                    http_app_update_status(HTTP_REQ_IDX_UPD);
+                }
+
+                break;
             case GUI_MODE_IDX_TIMER:
-                xEventGroupSync(
+                xEventGroupClearBits(user_event_group, GUI_DONE_BIT);
+                xEventGroupSetBits(user_event_group, GUI_RLD_BIT);
+
+                xEventGroupWaitBits(
                     user_event_group,
-                    GUI_RLD_BIT,
                     GUI_DONE_BIT,
+                    pdFALSE,
+                    pdFALSE,
                     portMAX_DELAY
                 );
 
@@ -64,19 +77,6 @@ static void man_task(void *pvParameter)
                 if (t_rem == 0) {
                     http_app_update_status(HTTP_REQ_IDX_OFF);
                 } else if (t_rem % 60 == update_sec) {
-                    http_app_update_status(HTTP_REQ_IDX_UPD);
-                }
-
-                break;
-            case GUI_MODE_IDX_QR_CODE:
-                xEventGroupSync(
-                    user_event_group,
-                    GUI_RLD_BIT,
-                    GUI_DONE_BIT,
-                    portMAX_DELAY
-                );
-
-                if (timeinfo.tm_sec == update_sec) {
                     http_app_update_status(HTTP_REQ_IDX_UPD);
                 }
 
@@ -117,7 +117,7 @@ char *man_get_token(void)
     return info.s_token;
 }
 
-man_info_t *man_get_info(void)
+man_info_t *man_update_info(void)
 {
     time_t now = 0;
 

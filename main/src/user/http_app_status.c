@@ -93,7 +93,7 @@ esp_err_t http_app_status_event_handler(esp_http_client_event_t *evt)
                                 }
 
                                 if (*man_get_token() == 0x00) {
-                                    gui_set_mode(6);
+                                    gui_set_mode(GUI_MODE_IDX_GIF_ERR);
                                 } else {
                                     gui_set_mode(GUI_MODE_IDX_QR_CODE);
                                 }
@@ -184,7 +184,7 @@ esp_err_t http_app_status_event_handler(esp_http_client_event_t *evt)
                 }
             } else {
                 if (*man_get_token() == 0x00) {
-                    gui_set_mode(6);
+                    gui_set_mode(GUI_MODE_IDX_GIF_ERR);
                 } else {
                     gui_set_mode(GUI_MODE_IDX_QR_CODE);
                 }

@@ -48,7 +48,7 @@ static void ntp_task(void *pvParameter)
     xEventGroupClearBits(user_event_group, KEY_RUN_BIT);
 
     led_set_mode(2);
-    gui_set_mode(5);
+    gui_set_mode(GUI_MODE_IDX_GIF_CLK);
 
     sntp_setoperatingmode(SNTP_OPMODE_POLL);
     sntp_setservername(0, CONFIG_NTP_SERVER_URL);
@@ -70,7 +70,7 @@ static void ntp_task(void *pvParameter)
         if (++retry > retry_count) {
             ESP_LOGE(TAG, "time sync timeout");
 
-            gui_set_mode(4);
+            gui_set_mode(GUI_MODE_IDX_GIF_PWR);
             vTaskDelay(2000 / portTICK_RATE_MS);
 
             esp_restart();
