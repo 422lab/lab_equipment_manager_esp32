@@ -1,4 +1,6 @@
-idf_component_register(SRCS ./src/qrcodegen.c ./src/qrcode.c
-                       INCLUDE_DIRS include src
-                       REQUIRES
-                       PRIV_REQUIRES )
+set(COMPONENT_SRCDIRS .)
+set(COMPONENT_ADD_INCLUDEDIRS .)
+
+set(COMPONENT_REQUIRES main)
+
+register_component()

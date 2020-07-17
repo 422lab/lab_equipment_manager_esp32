@@ -12,7 +12,7 @@
 #include "esp_system.h"
 
 #include "gfx.h"
-#include "qrcode.h"
+#include "qrcodegen.h"
 
 #include "core/os.h"
 #include "user/man.h"
@@ -20,6 +20,8 @@
 #include "user/http_app_status.h"
 
 #define TAG "gui"
+
+#define MAX_QRCODE_VERSION 5
 
 static const char *img_file_ptr[][2] = {
     {ani0_240x135_gif_ptr, ani0_240x135_gif_end}, // "WiFi"
@@ -43,33 +45,45 @@ static GTimer gui_flush_timer;
 static uint8_t gui_mode = 0;
 static uint8_t gui_backlight = 255;
 
-void printQr(const uint8_t qrcode[])
+static void gui_draw_qrcode(const char *text, int border, uint32_t fg_color, uint32_t bg_color)
 {
-    uint32_t bg_color = White;
-    int size = qrcodegen_getSize(qrcode);
-    int border = 2;
+    uint8_t *qrcode, *qrtemp;
+    enum qrcodegen_Ecc ecc_level = qrcodegen_Ecc_LOW;
 
-    EventBits_t uxBits = xEventGroupGetBits(wifi_event_group);
-    if (!(uxBits & WIFI_RDY_BIT)) {
-        bg_color = Silver;
-    } else {
-        bg_color = White;
+    qrcode = calloc(1, qrcodegen_BUFFER_LEN_FOR_VERSION(MAX_QRCODE_VERSION));
+    qrtemp = calloc(1, qrcodegen_BUFFER_LEN_FOR_VERSION(MAX_QRCODE_VERSION));
+    if (!qrcode || !qrtemp) {
+        ESP_LOGE(TAG, "not enough memory");
+
+        free(qrcode);
+        free(qrtemp);
+
+        return;
     }
 
-    gdispGClear(gui_gdisp, bg_color);
-    gdispGSetBacklight(gui_gdisp, gui_backlight);
+    if (qrcodegen_encodeText(text, qrtemp, qrcode, ecc_level,
+                             qrcodegen_VERSION_MIN, MAX_QRCODE_VERSION,
+                             qrcodegen_Mask_AUTO, true)) {
+        int size = qrcodegen_getSize(qrcode);
 
-    for (int y=-border; y<size+border; y++) {
-        for (int x=-border; x<size+border; x++) {
-            if (qrcodegen_getModule(qrcode, x, y)) {
-                gdispGFillArea(gui_gdisp, x*5+59, y*5+5, 5, 5, Black);
-            } else {
-                gdispGFillArea(gui_gdisp, x*5+59, y*5+5, 5, 5, bg_color);
+        gdispGClear(gui_gdisp, bg_color);
+        gdispGSetBacklight(gui_gdisp, gui_backlight);
+
+        for (int y=-border; y<size+border; y++) {
+            for (int x=-border; x<size+border; x++) {
+                if (qrcodegen_getModule(qrcode, x, y)) {
+                    gdispGFillArea(gui_gdisp, x*5+59, y*5+5, 5, 5, fg_color);
+                } else {
+                    gdispGFillArea(gui_gdisp, x*5+59, y*5+5, 5, 5, bg_color);
+                }
             }
         }
+
+        gtimerJab(&gui_flush_timer);
     }
 
-    gtimerJab(&gui_flush_timer);
+    free(qrcode);
+    free(qrtemp);
 }
 
 static void gui_flush_task(void *pvParameter)
@@ -149,7 +163,7 @@ static void gui_task(void *pvParameter)
             }
             break;
         }
-        case GUI_MODE_IDX_TIMER:
+        case GUI_MODE_IDX_TIMER: {
             gdispGClear(gui_gdisp, Black);
             gdispGSetBacklight(gui_gdisp, gui_backlight);
 
@@ -202,13 +216,19 @@ static void gui_task(void *pvParameter)
             );
 
             break;
-        case GUI_MODE_IDX_QR_CODE:
+        }
+        case GUI_MODE_IDX_QR_CODE: {
             if (*man_get_token() == 0x00) {
                 gui_mode = GUI_MODE_IDX_GIF_ERR;
                 break;
             }
 
-            qrcode_encode(man_get_token());
+            EventBits_t uxBits = xEventGroupGetBits(wifi_event_group);
+            if (!(uxBits & WIFI_RDY_BIT)) {
+                gui_draw_qrcode(man_get_token(), 2, Black, Silver);
+            } else {
+                gui_draw_qrcode(man_get_token(), 2, Black, White);
+            }
 
             xEventGroupWaitBits(
                 user_event_group,
@@ -219,6 +239,7 @@ static void gui_task(void *pvParameter)
             );
 
             break;
+        }
         case GUI_MODE_IDX_PAUSE:
             xEventGroupWaitBits(
                 user_event_group,
