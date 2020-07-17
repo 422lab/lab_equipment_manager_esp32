@@ -49,8 +49,11 @@ static void man_task(void *pvParameter)
         xLastWakeTime = xTaskGetTickCount();
 
         switch (gui_get_mode()) {
-            case GUI_MODE_IDX_GIF_ERR:
             case GUI_MODE_IDX_QR_CODE:
+                xEventGroupSetBits(user_event_group, GUI_RLD_BIT);
+
+                __attribute__((fallthrough));
+            case GUI_MODE_IDX_GIF_ERR:
                 man_update_info();
 
                 if (timeinfo.tm_sec == update_sec) {
@@ -62,13 +65,16 @@ static void man_task(void *pvParameter)
                 xEventGroupClearBits(user_event_group, GUI_DONE_BIT);
                 xEventGroupSetBits(user_event_group, GUI_RLD_BIT);
 
-                xEventGroupWaitBits(
+                EventBits_t uxBits = xEventGroupWaitBits(
                     user_event_group,
                     GUI_DONE_BIT,
                     pdFALSE,
                     pdFALSE,
-                    portMAX_DELAY
+                    1000 / portTICK_RATE_MS
                 );
+                if (!(uxBits & GUI_DONE_BIT)) {
+                    break;
+                }
 
                 if (t_rem / 60 <= 4 && t_rem % 60 == 10) {
                     audio_player_play_file(0);
