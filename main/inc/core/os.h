@@ -12,8 +12,7 @@
 #include "freertos/event_groups.h"
 
 typedef enum wifi_event_group_bits {
-    WIFI_CFG_BIT = BIT0,
-    WIFI_RDY_BIT = BIT1,
+    WIFI_RDY_BIT = BIT0,
 } wifi_event_group_bits_t;
 
 typedef enum user_event_group_bits {
@@ -29,13 +28,9 @@ typedef enum user_event_group_bits {
     AUDIO_PLAYER_RUN_BIT  = BIT6,
     AUDIO_PLAYER_IDLE_BIT = BIT7,
 
-    HTTP_APP_OTA_RUN_BIT  = BIT8,
-    HTTP_APP_OTA_RDY_BIT  = BIT9,
-    HTTP_APP_OTA_FAIL_BIT = BIT10,
-
-    HTTP_APP_STATUS_RUN_BIT  = BIT11,
-    HTTP_APP_STATUS_RDY_BIT  = BIT12,
-    HTTP_APP_STATUS_FAIL_BIT = BIT13,
+    HTTP_APP_STATUS_RUN_BIT  = BIT8,
+    HTTP_APP_STATUS_RDY_BIT  = BIT9,
+    HTTP_APP_STATUS_FAIL_BIT = BIT10,
 } user_event_group_bits_t;
 
 extern EventGroupHandle_t wifi_event_group;

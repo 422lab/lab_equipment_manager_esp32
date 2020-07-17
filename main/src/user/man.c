@@ -15,7 +15,6 @@
 #include "user/gui.h"
 #include "user/led.h"
 #include "user/audio_player.h"
-#include "user/http_app_ota.h"
 #include "user/http_app_status.h"
 
 #define TAG "man"
@@ -38,10 +37,6 @@ static void man_task(void *pvParameter)
     );
 
     ESP_LOGI(TAG, "started.");
-
-#ifdef CONFIG_ENABLE_OTA
-    http_app_check_for_updates();
-#endif
 
     http_app_update_status(HTTP_REQ_IDX_UPD);
 

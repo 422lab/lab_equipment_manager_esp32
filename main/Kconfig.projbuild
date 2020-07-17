@@ -25,12 +25,6 @@ config VERIFY_SERVER_CERT
     depends on TRANSFER_PROTOCOL_HTTPS
     help
         Select this to enable server ssl certificate verification.
-
-config ENABLE_OTA
-    bool "Enable OTA Update"
-    default n
-    help
-        Select this to enable ota update.
 endmenu
 
 menu "WiFi Configuration"
@@ -51,35 +45,6 @@ config WIFI_HOSTNAME_PREFIX
     default "LEM"
     help
         WiFi hostname prefix for the device to use.
-
-config ENABLE_SC_KEY
-    bool "Enable SmartConfig Key"
-    default n
-    help
-        Select this to enable smartconfig key.
-
-config SC_KEY_HOLD_TIME
-    int "SmartConfig Key Hold Time (ms)"
-    default 500
-    depends on ENABLE_SC_KEY
-
-choice SC_KEY_ACTIVE_LEVEL
-    prompt "SmartConfig Key Active Level"
-    default SC_KEY_ACTIVE_LOW
-    depends on ENABLE_SC_KEY
-    help
-        Select SmartConfig Key Active Level.
-
-config SC_KEY_ACTIVE_HIGH
-    bool "Active High"
-config SC_KEY_ACTIVE_LOW
-    bool "Active Low"
-endchoice
-
-config SC_KEY_PIN
-    int "SmartConfig Key Pin"
-    default 0
-    depends on ENABLE_SC_KEY
 endmenu
 
 menu "NTP Configuration"
