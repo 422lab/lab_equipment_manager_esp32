@@ -30,6 +30,7 @@ static void ntp_time_sync_notification_cb(struct timeval *tv)
     ESP_LOGW(TAG, "current date/time: %s", strftime_buf);
 
     xEventGroupSetBits(user_event_group, NTP_RDY_BIT);
+    xEventGroupSetBits(user_event_group, MAN_RUN_BIT);
 }
 
 static void ntp_task(void *pvParameter)
@@ -78,8 +79,6 @@ static void ntp_task(void *pvParameter)
 
         vTaskDelayUntil(&xLastWakeTime, 1000 / portTICK_RATE_MS);
     }
-
-    xEventGroupSetBits(user_event_group, MAN_RUN_BIT);
 
     vTaskDelete(NULL);
 }
