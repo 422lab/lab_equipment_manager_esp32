@@ -108,7 +108,7 @@ static void gui_task(void *pvParameter)
 
     ESP_LOGI(TAG, "started.");
 
-    gdispGSetOrientation(gui_gdisp, GDISP_ROTATE_270);
+    gdispGSetOrientation(gui_gdisp, CONFIG_LCD_ROTATION_DEGREE);
 
     while (1) {
         switch (gui_mode) {
