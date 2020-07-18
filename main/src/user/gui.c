@@ -24,15 +24,15 @@
 #define MAX_QRCODE_VERSION 5
 
 static const char *img_file_ptr[][2] = {
-    {ani0_240x135_gif_ptr, ani0_240x135_gif_end}, // "WiFi"
-    {ani1_240x135_gif_ptr, ani1_240x135_gif_end}, // "Loading"
-    {ani2_240x135_gif_ptr, ani2_240x135_gif_end}, // "Success"
-    {ani3_240x135_gif_ptr, ani3_240x135_gif_end}, // "NFC"
-    {ani4_240x135_gif_ptr, ani4_240x135_gif_end}, // "PowerOff"
-    {ani5_240x135_gif_ptr, ani5_240x135_gif_end}, // "Clock"
-    {ani6_240x135_gif_ptr, ani6_240x135_gif_end}, // "Error"
-    {ani7_240x135_gif_ptr, ani7_240x135_gif_end}, // "Config"
-    {ani8_240x135_gif_ptr, ani8_240x135_gif_end}, // "Updating"
+    [GUI_MODE_IDX_GIF_WIFI] = {ani0_240x135_gif_ptr, ani0_240x135_gif_end},
+    [GUI_MODE_IDX_GIF_BUSY] = {ani1_240x135_gif_ptr, ani1_240x135_gif_end},
+    [GUI_MODE_IDX_GIF_DONE] = {ani2_240x135_gif_ptr, ani2_240x135_gif_end},
+    [GUI_MODE_IDX_GIF_SCAN] = {ani3_240x135_gif_ptr, ani3_240x135_gif_end},
+    [GUI_MODE_IDX_GIF_PWR]  = {ani4_240x135_gif_ptr, ani4_240x135_gif_end},
+    [GUI_MODE_IDX_GIF_CLK]  = {ani5_240x135_gif_ptr, ani5_240x135_gif_end},
+    [GUI_MODE_IDX_GIF_ERR]  = {ani6_240x135_gif_ptr, ani6_240x135_gif_end},
+    [GUI_MODE_IDX_GIF_CFG]  = {ani7_240x135_gif_ptr, ani7_240x135_gif_end},
+    [GUI_MODE_IDX_GIF_UPD]  = {ani8_240x135_gif_ptr, ani8_240x135_gif_end},
 };
 
 GDisplay *gui_gdisp = NULL;
@@ -115,7 +115,7 @@ static void gui_task(void *pvParameter)
         case GUI_MODE_IDX_GIF_WIFI:
         case GUI_MODE_IDX_GIF_BUSY:
         case GUI_MODE_IDX_GIF_DONE:
-        case GUI_MODE_IDX_GIF_NFC:
+        case GUI_MODE_IDX_GIF_SCAN:
         case GUI_MODE_IDX_GIF_PWR:
         case GUI_MODE_IDX_GIF_CLK:
         case GUI_MODE_IDX_GIF_ERR:
