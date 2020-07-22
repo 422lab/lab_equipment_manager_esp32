@@ -27,11 +27,11 @@ wifi_config_t wifi_config = {
 void wifi_init(void)
 {
     esp_netif_t *wifi_sta = esp_netif_create_default_wifi_sta();
-    ESP_ERROR_CHECK(esp_netif_set_hostname(wifi_sta, wifi_hostname));
 
     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
     ESP_ERROR_CHECK(esp_wifi_init(&cfg));
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
+    ESP_ERROR_CHECK(esp_wifi_set_ps(WIFI_PS_MIN_MODEM));
     ESP_ERROR_CHECK(esp_wifi_set_storage(WIFI_STORAGE_RAM));
 
     memcpy(wifi_config.sta.ssid, (char *)CONFIG_WIFI_SSID, strlen(CONFIG_WIFI_SSID));
@@ -42,11 +42,12 @@ void wifi_init(void)
     ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_STA, &wifi_config));
     ESP_ERROR_CHECK(esp_wifi_start());
 
-    ESP_ERROR_CHECK(esp_wifi_set_ps(WIFI_PS_MIN_MODEM));
     ESP_ERROR_CHECK(esp_wifi_get_mac(ESP_IF_WIFI_STA, (uint8_t *)wifi_mac_address));
+    snprintf(wifi_mac_string, sizeof(wifi_mac_string), MACSTR, MAC2STR(wifi_mac_address));
+
     snprintf(wifi_hostname, sizeof(wifi_hostname), "%s_%X%X%X", CONFIG_WIFI_HOSTNAME_PREFIX,
              wifi_mac_address[3], wifi_mac_address[4], wifi_mac_address[5]);
-    snprintf(wifi_mac_string, sizeof(wifi_mac_string), MACSTR, MAC2STR(wifi_mac_address));
+    ESP_ERROR_CHECK(esp_netif_set_hostname(wifi_sta, wifi_hostname));
 
     ESP_LOGI(TAG, "initialized.");
 }

@@ -24,13 +24,13 @@ static void wifi_event_handler(void* arg, esp_event_base_t event_base,
 {
     switch (event_id) {
         case WIFI_EVENT_STA_START:
-            ESP_ERROR_CHECK(esp_wifi_connect());
+            esp_wifi_connect();
             break;
         case WIFI_EVENT_STA_CONNECTED:
             break;
         case WIFI_EVENT_STA_DISCONNECTED:
             xEventGroupClearBits(wifi_event_group, WIFI_RDY_BIT);
-            ESP_ERROR_CHECK(esp_wifi_connect());
+            esp_wifi_connect();
             break;
         default:
             break;
