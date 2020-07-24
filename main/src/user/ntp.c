@@ -11,8 +11,9 @@
 #include "esp_sntp.h"
 
 #include "core/os.h"
-#include "user/gui.h"
+
 #include "user/led.h"
+#include "user/gui.h"
 
 #define TAG "ntp"
 
@@ -35,9 +36,6 @@ static void ntp_time_sync_notification_cb(struct timeval *tv)
 
 static void ntp_task(void *pvParameter)
 {
-    portTickType xLastWakeTime;
-    const int retry_count = 30;
-
     xEventGroupWaitBits(
         user_event_group,
         NTP_RUN_BIT,
@@ -63,12 +61,13 @@ static void ntp_task(void *pvParameter)
     ESP_LOGI(TAG, "started.");
 
     int retry = 1;
+    const int max_retry = 15;
     while (sntp_get_sync_status() == SNTP_SYNC_STATUS_RESET) {
-        xLastWakeTime = xTaskGetTickCount();
+        ESP_LOGW(TAG, "waiting for system time to be set... (%d/%d)", retry, max_retry);
 
-        ESP_LOGW(TAG, "waiting for system time to be set... (%d/%d)", retry, retry_count);
+        vTaskDelay(1000 / portTICK_RATE_MS);
 
-        if (++retry > retry_count) {
+        if (++retry > max_retry) {
             ESP_LOGE(TAG, "time sync timeout");
 
             gui_set_mode(GUI_MODE_IDX_GIF_PWR);
@@ -76,8 +75,6 @@ static void ntp_task(void *pvParameter)
 
             esp_restart();
         }
-
-        vTaskDelayUntil(&xLastWakeTime, 1000 / portTICK_RATE_MS);
     }
 
     vTaskDelete(NULL);
