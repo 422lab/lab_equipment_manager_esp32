@@ -5,10 +5,10 @@ Lab Equipment Manager based on ESP32 chip.
 
 ## Main Features
 
-* QR Code Login
-* One-click ON/OFF
-* Timeout Reminder (Audio Prompt)
-* LCD Display (QR Code / User Info / Time Remaining)
+* QR Code login
+* One-Click ON / OFF
+* Timeout reminder (Audio prompt)
+* LCD display (QR Code / User info / Time remaining)
 
 ## Preparing
 
