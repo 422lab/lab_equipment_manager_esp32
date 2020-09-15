@@ -6,7 +6,6 @@
  */
 
 #include "esp_log.h"
-#include "esp_system.h"
 
 #include "freertos/FreeRTOS.h"
 #include "driver/i2s.h"
@@ -32,20 +31,11 @@ static const char *mp3_file_ptr[][2] = {
     {snd7_mp3_ptr, snd7_mp3_end}, // "开始配网"
 };
 
-static uint8_t mp3_file_index   = 0;
+static uint8_t mp3_file_index = 0;
 static uint8_t playback_pending = 0;
 
 static void audio_player_task(void *pvParameters)
 {
-    // Allocate structs needed for mp3 decoding
-    struct mad_stream *stream = malloc(sizeof(struct mad_stream));
-    struct mad_frame  *frame  = malloc(sizeof(struct mad_frame));
-    struct mad_synth  *synth  = malloc(sizeof(struct mad_synth));
-
-    if (stream == NULL) { ESP_LOGE(TAG, "malloc(stream) failed"); goto err; }
-    if (frame  == NULL) { ESP_LOGE(TAG, "malloc(frame) failed");  goto err; }
-    if (synth  == NULL) { ESP_LOGE(TAG, "malloc(synth) failed");  goto err; }
-
     ESP_LOGI(TAG, "started.");
 
     while (1) {
@@ -57,7 +47,27 @@ static void audio_player_task(void *pvParameters)
             portMAX_DELAY
         );
 
-        // Initialize mp3 parts
+        // allocate structs needed for mp3 decoding
+        struct mad_stream *stream = malloc(sizeof(struct mad_stream));
+        struct mad_frame  *frame  = malloc(sizeof(struct mad_frame));
+        struct mad_synth  *synth  = malloc(sizeof(struct mad_synth));
+
+        if ((stream == NULL) || (frame == NULL) || (synth == NULL)) {
+            xEventGroupSetBits(user_event_group, AUDIO_PLAYER_IDLE_BIT);
+            xEventGroupClearBits(user_event_group, AUDIO_PLAYER_RUN_BIT);
+
+            ESP_LOGE(TAG, "allocate memory failed.");
+
+            playback_pending = 0;
+
+            free(synth);
+            free(frame);
+            free(stream);
+
+            continue;
+        }
+
+        // initialize mp3 parts
         mad_stream_init(stream);
         mad_frame_init(frame);
         mad_synth_init(synth);
@@ -82,6 +92,10 @@ static void audio_player_task(void *pvParameters)
         mad_frame_finish(frame);
         mad_stream_finish(stream);
 
+        free(synth);
+        free(frame);
+        free(stream);
+
         if (playback_pending) {
             playback_pending = 0;
         } else {
@@ -89,14 +103,6 @@ static void audio_player_task(void *pvParameters)
             xEventGroupClearBits(user_event_group, AUDIO_PLAYER_RUN_BIT);
         }
     }
-
-err:
-    free(synth);
-    free(frame);
-    free(stream);
-
-    ESP_LOGE(TAG, "unrecoverable error");
-    esp_restart();
 }
 
 void audio_player_play_file(uint8_t idx)
@@ -109,10 +115,11 @@ void audio_player_play_file(uint8_t idx)
     if (mp3_file_ptr[idx][0] == NULL || mp3_file_ptr[idx][1] == NULL) {
         return;
     }
+
     mp3_file_index = idx;
+
     EventBits_t uxBits = xEventGroupGetBits(user_event_group);
     if (uxBits & AUDIO_PLAYER_RUN_BIT) {
-        // Previous playback is still not complete
         playback_pending = 1;
     } else {
         xEventGroupClearBits(user_event_group, AUDIO_PLAYER_IDLE_BIT);
