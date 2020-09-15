@@ -17,11 +17,11 @@
 #define TAG "key"
 
 static const uint8_t gpio_pin[] = {
-    CONFIG_PWR_KEY_PIN,
+    CONFIG_POWER_KEY_PIN,
 };
 
 static const uint8_t gpio_val[] = {
-#ifdef CONFIG_PWR_KEY_ACTIVE_LOW
+#ifdef CONFIG_POWER_KEY_ACTIVE_LOW
     0,
 #else
     1,
@@ -29,11 +29,11 @@ static const uint8_t gpio_val[] = {
 };
 
 static const uint16_t gpio_hold[] = {
-    CONFIG_PWR_KEY_HOLD_TIME,
+    CONFIG_POWER_KEY_HOLD_TIME,
 };
 
 static void (*key_handle[])(void) = {
-    pwr_key_handle,
+    power_key_handle,
 };
 
 static void key_task(void *pvParameter)

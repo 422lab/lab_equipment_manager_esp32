@@ -13,7 +13,7 @@
 
 #define PWR_KEY_TAG "pwr_key"
 
-void pwr_key_handle(void)
+void power_key_handle(void)
 {
     if (relay_get_status()) {
         ESP_LOGW(PWR_KEY_TAG, "power off");

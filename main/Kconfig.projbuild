@@ -127,23 +127,23 @@ config LED_PIN
 endmenu
 
 menu "Key Configuration"
-config PWR_KEY_HOLD_TIME
+config POWER_KEY_HOLD_TIME
     int "Power Key Hold Time (ms)"
     default 50
 
-choice PWR_KEY_ACTIVE_LEVEL
+choice POWER_KEY_ACTIVE_LEVEL
     prompt "Power Key Active Level"
-    default PWR_KEY_ACTIVE_LOW
+    default POWER_KEY_ACTIVE_LOW
     help
         Select Power Key Active Level.
 
-config PWR_KEY_ACTIVE_HIGH
+config POWER_KEY_ACTIVE_HIGH
     bool "Active High"
-config PWR_KEY_ACTIVE_LOW
+config POWER_KEY_ACTIVE_LOW
     bool "Active Low"
 endchoice
 
-config PWR_KEY_PIN
+config POWER_KEY_PIN
     int "Power Key Pin"
     default 0
 endmenu
