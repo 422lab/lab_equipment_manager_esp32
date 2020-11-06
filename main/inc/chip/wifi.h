@@ -14,8 +14,6 @@ extern char wifi_hostname[40];
 extern char wifi_mac_string[18];
 extern char wifi_mac_address[6];
 
-extern wifi_config_t wifi_config;
-
 extern void wifi_init(void);
 
 #endif /* INC_CHIP_WIFI_H_ */

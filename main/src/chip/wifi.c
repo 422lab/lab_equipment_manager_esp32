@@ -16,7 +16,7 @@ char wifi_hostname[40] = {0};
 char wifi_mac_string[18] = {0};
 char wifi_mac_address[6] = {0};
 
-wifi_config_t wifi_config = {
+static wifi_config_t wifi_config = {
     .sta = {
         .scan_method = WIFI_ALL_CHANNEL_SCAN,
         .sort_method = WIFI_CONNECT_AP_BY_SIGNAL,
