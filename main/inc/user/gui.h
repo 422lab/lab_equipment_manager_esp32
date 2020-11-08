@@ -8,28 +8,26 @@
 #ifndef INC_USER_GUI_H_
 #define INC_USER_GUI_H_
 
-#include <stdint.h>
-
 typedef enum {
     GUI_MODE_IDX_GIF_WIFI = 0x00,
-    GUI_MODE_IDX_GIF_BUSY = 0x01,
-    GUI_MODE_IDX_GIF_DONE = 0x02,
-    GUI_MODE_IDX_GIF_SCAN = 0x03,
-    GUI_MODE_IDX_GIF_PWR  = 0x04,
-    GUI_MODE_IDX_GIF_CLK  = 0x05,
-    GUI_MODE_IDX_GIF_ERR  = 0x06,
+    GUI_MODE_IDX_GIF_SCAN = 0x01,
+    GUI_MODE_IDX_GIF_BUSY = 0x02,
+    GUI_MODE_IDX_GIF_DONE = 0x03,
+    GUI_MODE_IDX_GIF_FAIL = 0x04,
+    GUI_MODE_IDX_GIF_PWR  = 0x05,
+    GUI_MODE_IDX_GIF_CLK  = 0x06,
     GUI_MODE_IDX_GIF_CFG  = 0x07,
     GUI_MODE_IDX_GIF_UPD  = 0x08,
 
-    GUI_MODE_IDX_GIF_MAX  = 0x10,
+    GUI_MODE_IDX_GIF_MAX,
 
-    GUI_MODE_IDX_TIMER   = 0xEE,
-    GUI_MODE_IDX_QR_CODE = 0xEF,
+    GUI_MODE_IDX_TIMER  = 0xEE,
+    GUI_MODE_IDX_QRCODE = 0xEF,
 
     GUI_MODE_IDX_MAX,
 
     GUI_MODE_IDX_PAUSE = 0xFE,
-    GUI_MODE_IDX_OFF   = 0xFF,
+    GUI_MODE_IDX_OFF   = 0xFF
 } gui_mode_t;
 
 // ani0.gif
@@ -60,8 +58,8 @@ extern const char ani7_240x135_gif_end[] asm("_binary_ani7_240x135_gif_end");
 extern const char ani8_240x135_gif_ptr[] asm("_binary_ani8_240x135_gif_start");
 extern const char ani8_240x135_gif_end[] asm("_binary_ani8_240x135_gif_end");
 
-extern void gui_set_mode(uint8_t idx);
-extern uint8_t gui_get_mode(void);
+extern void gui_set_mode(gui_mode_t idx);
+extern gui_mode_t gui_get_mode(void);
 
 extern void gui_init(void);
 

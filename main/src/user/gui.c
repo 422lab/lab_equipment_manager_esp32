@@ -9,7 +9,6 @@
 #include <string.h>
 
 #include "esp_log.h"
-#include "esp_system.h"
 
 #include "gfx.h"
 #include "qrcodegen.h"
@@ -25,25 +24,26 @@
 
 static const char *img_file_ptr[][2] = {
     [GUI_MODE_IDX_GIF_WIFI] = {ani0_240x135_gif_ptr, ani0_240x135_gif_end},
-    [GUI_MODE_IDX_GIF_BUSY] = {ani1_240x135_gif_ptr, ani1_240x135_gif_end},
-    [GUI_MODE_IDX_GIF_DONE] = {ani2_240x135_gif_ptr, ani2_240x135_gif_end},
-    [GUI_MODE_IDX_GIF_SCAN] = {ani3_240x135_gif_ptr, ani3_240x135_gif_end},
-    [GUI_MODE_IDX_GIF_PWR]  = {ani4_240x135_gif_ptr, ani4_240x135_gif_end},
-    [GUI_MODE_IDX_GIF_CLK]  = {ani5_240x135_gif_ptr, ani5_240x135_gif_end},
-    [GUI_MODE_IDX_GIF_ERR]  = {ani6_240x135_gif_ptr, ani6_240x135_gif_end},
+    [GUI_MODE_IDX_GIF_SCAN] = {ani1_240x135_gif_ptr, ani1_240x135_gif_end},
+    [GUI_MODE_IDX_GIF_BUSY] = {ani2_240x135_gif_ptr, ani2_240x135_gif_end},
+    [GUI_MODE_IDX_GIF_DONE] = {ani3_240x135_gif_ptr, ani3_240x135_gif_end},
+    [GUI_MODE_IDX_GIF_FAIL] = {ani4_240x135_gif_ptr, ani4_240x135_gif_end},
+    [GUI_MODE_IDX_GIF_PWR]  = {ani5_240x135_gif_ptr, ani5_240x135_gif_end},
+    [GUI_MODE_IDX_GIF_CLK]  = {ani6_240x135_gif_ptr, ani6_240x135_gif_end},
     [GUI_MODE_IDX_GIF_CFG]  = {ani7_240x135_gif_ptr, ani7_240x135_gif_end},
-    [GUI_MODE_IDX_GIF_UPD]  = {ani8_240x135_gif_ptr, ani8_240x135_gif_end},
+    [GUI_MODE_IDX_GIF_UPD]  = {ani8_240x135_gif_ptr, ani8_240x135_gif_end}
 };
 
 GDisplay *gui_gdisp = NULL;
+
+static uint8_t gui_backlight = 255;
 
 static coord_t gui_disp_width = 0;
 static coord_t gui_disp_height = 0;
 
 static GTimer gui_flush_timer;
 
-static uint8_t gui_mode = 0;
-static uint8_t gui_backlight = 255;
+static gui_mode_t gui_mode = GUI_MODE_IDX_GIF_WIFI;
 
 static void gui_draw_qrcode(const char *text, int border, uint32_t fg_color, uint32_t bg_color)
 {
@@ -113,12 +113,12 @@ static void gui_task(void *pvParameter)
     while (1) {
         switch (gui_mode) {
         case GUI_MODE_IDX_GIF_WIFI:
+        case GUI_MODE_IDX_GIF_SCAN:
         case GUI_MODE_IDX_GIF_BUSY:
         case GUI_MODE_IDX_GIF_DONE:
-        case GUI_MODE_IDX_GIF_SCAN:
+        case GUI_MODE_IDX_GIF_FAIL:
         case GUI_MODE_IDX_GIF_PWR:
         case GUI_MODE_IDX_GIF_CLK:
-        case GUI_MODE_IDX_GIF_ERR:
         case GUI_MODE_IDX_GIF_CFG:
         case GUI_MODE_IDX_GIF_UPD: {
             gdispImage gfx_image;
@@ -131,8 +131,8 @@ static void gui_task(void *pvParameter)
                 while (1) {
                     xLastWakeTime = xTaskGetTickCount();
 
-                    if (xEventGroupGetBits(user_event_group) & GUI_RLD_BIT) {
-                        xEventGroupClearBits(user_event_group, GUI_RLD_BIT);
+                    if (xEventGroupGetBits(user_event_group) & GUI_RLD_MODE_BIT) {
+                        xEventGroupClearBits(user_event_group, GUI_RLD_MODE_BIT);
                         break;
                     }
 
@@ -171,45 +171,45 @@ static void gui_task(void *pvParameter)
 
             EventBits_t uxBits = xEventGroupGetBits(wifi_event_group);
             if (!(uxBits & WIFI_RDY_BIT)) {
-                snprintf(text_buff, sizeof(text_buff), "(%10s)", info->u_info);
+                snprintf(text_buff, sizeof(text_buff), "(%10s)", info->user_info);
                 gdispGFillStringBox(gui_gdisp, 2, 2, 236, 32, text_buff, gui_font, Silver, Black, justifyCenter);
             } else {
-                snprintf(text_buff, sizeof(text_buff), "(%10s)", info->u_info);
+                snprintf(text_buff, sizeof(text_buff), "(%10s)", info->user_info);
                 gdispGFillStringBox(gui_gdisp, 2, 2, 236, 32, text_buff, gui_font, Yellow, Black, justifyCenter);
             }
 
-            snprintf(text_buff, sizeof(text_buff), "T-N:");
+            snprintf(text_buff, sizeof(text_buff), "T-C:");
             gdispGFillStringBox(gui_gdisp, 2, 34, 86, 32, text_buff, gui_font, Cyan, Black, justifyLeft);
 
-            snprintf(text_buff, sizeof(text_buff), "%02d:%02d:%02d", info->n_hour, info->n_min, info->n_sec);
+            snprintf(text_buff, sizeof(text_buff), "%02d:%02d:%02d", info->cur_hour, info->cur_min, info->cur_sec);
             gdispGFillStringBox(gui_gdisp, 88, 34, 150, 32, text_buff, gui_font, Cyan, Black, justifyRight);
 
             snprintf(text_buff, sizeof(text_buff), "T-E:");
             gdispGFillStringBox(gui_gdisp, 2, 67, 86, 32, text_buff, gui_font, Magenta, Black, justifyLeft);
 
-            snprintf(text_buff, sizeof(text_buff), "%02d:%02d:%02d", info->e_hour, info->e_min, info->e_sec);
+            snprintf(text_buff, sizeof(text_buff), "%02d:%02d:%02d", info->exp_hour, info->exp_min, info->exp_sec);
             gdispGFillStringBox(gui_gdisp, 88, 67, 150, 32, text_buff, gui_font, Magenta, Black, justifyRight);
 
-            if (info->r_hour <= 0 && info->r_min <= 4) {
+            if (info->rem_hour <= 0 && info->rem_min <= 4) {
                 snprintf(text_buff, sizeof(text_buff), "T-R:");
                 gdispGFillStringBox(gui_gdisp, 2, 100, 86, 32, text_buff, gui_font, Orange, Black, justifyLeft);
 
-                snprintf(text_buff, sizeof(text_buff), "%02d:%02d:%02d", info->r_hour, info->r_min, info->r_sec);
+                snprintf(text_buff, sizeof(text_buff), "%02d:%02d:%02d", info->rem_hour, info->rem_min, info->rem_sec);
                 gdispGFillStringBox(gui_gdisp, 88, 100, 150, 32, text_buff, gui_font, Orange, Black, justifyRight);
             } else {
                 snprintf(text_buff, sizeof(text_buff), "T-R:");
                 gdispGFillStringBox(gui_gdisp, 2, 100, 86, 32, text_buff, gui_font, Lime, Black, justifyLeft);
 
-                snprintf(text_buff, sizeof(text_buff), "%02d:%02d:%02d", info->r_hour, info->r_min, info->r_sec);
+                snprintf(text_buff, sizeof(text_buff), "%02d:%02d:%02d", info->rem_hour, info->rem_min, info->rem_sec);
                 gdispGFillStringBox(gui_gdisp, 88, 100, 150, 32, text_buff, gui_font, Lime, Black, justifyRight);
             }
 
             gtimerJab(&gui_flush_timer);
 
-            xEventGroupSetBits(user_event_group, GUI_DONE_BIT);
+            xEventGroupSetBits(user_event_group, GUI_TIM_SYNC_BIT);
             xEventGroupWaitBits(
                 user_event_group,
-                GUI_RLD_BIT,
+                GUI_RLD_MODE_BIT,
                 pdTRUE,
                 pdFALSE,
                 portMAX_DELAY
@@ -217,22 +217,22 @@ static void gui_task(void *pvParameter)
 
             break;
         }
-        case GUI_MODE_IDX_QR_CODE: {
-            if (*man_get_token() == 0x00) {
-                gui_mode = GUI_MODE_IDX_GIF_ERR;
+        case GUI_MODE_IDX_QRCODE: {
+            if (*man_get_qrcode() == 0x00) {
+                gui_mode = GUI_MODE_IDX_GIF_FAIL;
                 break;
             }
 
             EventBits_t uxBits = xEventGroupGetBits(wifi_event_group);
             if (!(uxBits & WIFI_RDY_BIT)) {
-                gui_draw_qrcode(man_get_token(), 2, Black, Silver);
+                gui_draw_qrcode(man_get_qrcode(), 2, Black, Silver);
             } else {
-                gui_draw_qrcode(man_get_token(), 2, Black, White);
+                gui_draw_qrcode(man_get_qrcode(), 2, Black, White);
             }
 
             xEventGroupWaitBits(
                 user_event_group,
-                GUI_RLD_BIT,
+                GUI_RLD_MODE_BIT,
                 pdTRUE,
                 pdFALSE,
                 portMAX_DELAY
@@ -243,7 +243,7 @@ static void gui_task(void *pvParameter)
         case GUI_MODE_IDX_PAUSE:
             xEventGroupWaitBits(
                 user_event_group,
-                GUI_RLD_BIT,
+                GUI_RLD_MODE_BIT,
                 pdTRUE,
                 pdFALSE,
                 portMAX_DELAY
@@ -261,7 +261,7 @@ static void gui_task(void *pvParameter)
 
             xEventGroupWaitBits(
                 user_event_group,
-                GUI_RLD_BIT,
+                GUI_RLD_MODE_BIT,
                 pdTRUE,
                 pdFALSE,
                 portMAX_DELAY
@@ -272,16 +272,16 @@ static void gui_task(void *pvParameter)
     }
 }
 
-void gui_set_mode(uint8_t idx)
+void gui_set_mode(gui_mode_t idx)
 {
     gui_mode = idx;
 
-    xEventGroupSetBits(user_event_group, GUI_RLD_BIT);
+    xEventGroupSetBits(user_event_group, GUI_RLD_MODE_BIT);
 
     ESP_LOGI(TAG, "mode: 0x%02X", gui_mode);
 }
 
-uint8_t gui_get_mode(void)
+gui_mode_t gui_get_mode(void)
 {
     return gui_mode;
 }
