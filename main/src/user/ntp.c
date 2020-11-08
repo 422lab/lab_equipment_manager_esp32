@@ -30,23 +30,22 @@ static void ntp_time_sync_notification_cb(struct timeval *tv)
     ESP_LOGW(TAG, "current timezone: %s", CONFIG_NTP_TIMEZONE);
     ESP_LOGW(TAG, "current date/time: %s", strftime_buf);
 
-    xEventGroupSetBits(user_event_group, NTP_RDY_BIT);
-    xEventGroupSetBits(user_event_group, MAN_RUN_BIT);
+    xEventGroupSetBits(user_event_group, NTP_SYNC_SET_BIT);
 }
 
 static void ntp_task(void *pvParameter)
 {
     xEventGroupWaitBits(
         user_event_group,
-        NTP_RUN_BIT,
+        NTP_SYNC_RUN_BIT,
         pdFALSE,
         pdFALSE,
         portMAX_DELAY
     );
 
-    xEventGroupClearBits(user_event_group, KEY_RUN_BIT);
-
-    led_set_mode(2);
+#ifdef CONFIG_ENABLE_LED
+    led_set_mode(LED_MODE_IDX_BLINK_M1);
+#endif
     gui_set_mode(GUI_MODE_IDX_GIF_CLK);
 
     sntp_setoperatingmode(SNTP_OPMODE_POLL);
@@ -60,21 +59,22 @@ static void ntp_task(void *pvParameter)
 
     ESP_LOGI(TAG, "started.");
 
-    int retry = 1;
+    int retry = 0;
     const int max_retry = 15;
     while (sntp_get_sync_status() == SNTP_SYNC_STATUS_RESET) {
-        ESP_LOGW(TAG, "waiting for system time to be set... (%d/%d)", retry, max_retry);
-
-        vTaskDelay(1000 / portTICK_RATE_MS);
-
         if (++retry > max_retry) {
             ESP_LOGE(TAG, "time sync timeout");
 
             gui_set_mode(GUI_MODE_IDX_GIF_PWR);
             vTaskDelay(2000 / portTICK_RATE_MS);
 
-            esp_restart();
+            os_pwr_reset_wait(OS_PWR_DUMMY_BIT);
+            break;
         }
+
+        ESP_LOGW(TAG, "waiting for system time to be set.... (%d/%d)", retry, max_retry);
+
+        vTaskDelay(1000 / portTICK_RATE_MS);
     }
 
     vTaskDelete(NULL);
@@ -83,8 +83,13 @@ static void ntp_task(void *pvParameter)
 void ntp_sync_time(void)
 {
     EventBits_t uxBits = xEventGroupGetBits(user_event_group);
-    if (!(uxBits & NTP_RDY_BIT)) {
-        xEventGroupSetBits(user_event_group, NTP_RUN_BIT);
+    if (!(uxBits & NTP_SYNC_SET_BIT)) {
+        xEventGroupSync(
+            user_event_group,
+            NTP_SYNC_RUN_BIT,
+            NTP_SYNC_SET_BIT,
+            portMAX_DELAY
+        );
     }
 }
 
