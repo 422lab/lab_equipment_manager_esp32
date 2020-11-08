@@ -60,7 +60,7 @@ static void ip_event_handler(void* arg, esp_event_base_t event_base,
             key_set_scan_mode(KEY_SCAN_MODE_IDX_OFF);
 
             ntp_sync_time();
-            http_app_update_status(HTTP_REQ_CODE_IDX_UPD);
+            http_app_update_status(HTTP_REQ_CODE_DEV_UPD);
             man_set_sync_mode(MAN_SYNC_MODE_IDX_ON);
 
             break;

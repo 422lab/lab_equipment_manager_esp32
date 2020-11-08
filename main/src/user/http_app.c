@@ -14,9 +14,9 @@
 #include "chip/wifi.h"
 #include "board/relay.h"
 
-#include "user/gui.h"
+#include "user/key.h"
 #include "user/led.h"
-#include "user/http_app.h"
+#include "user/gui.h"
 #include "user/audio_player.h"
 #include "user/http_app_status.h"
 
@@ -37,9 +37,11 @@ static void http_app_task(void *pvParameter)
             portMAX_DELAY
         );
 
-        xEventGroupClearBits(user_event_group, KEY_RUN_BIT);
+        key_set_scan_mode(KEY_SCAN_MODE_IDX_OFF);
 
-        led_set_mode(4);
+#ifdef CONFIG_ENABLE_LED
+        led_set_mode(LED_MODE_IDX_BLINK_F1);
+#endif
         gui_set_mode(GUI_MODE_IDX_GIF_BUSY);
 
         memset(&config, 0, sizeof(config));
@@ -60,10 +62,7 @@ static void http_app_task(void *pvParameter)
         if (uxBits & HTTP_APP_STATUS_RUN_BIT) {
             config.event_handler = http_app_status_event_handler;
             http_app_status_prepare_data(post_data, sizeof(post_data));
-            xEventGroupClearBits(
-                user_event_group,
-                HTTP_APP_STATUS_FAIL_BIT | HTTP_APP_STATUS_RDY_BIT
-            );
+            xEventGroupClearBits(user_event_group, HTTP_APP_STATUS_DONE_BIT | HTTP_APP_STATUS_FAIL_BIT);
         }
         esp_http_client_handle_t client = esp_http_client_init(&config);
 
@@ -72,24 +71,27 @@ static void http_app_task(void *pvParameter)
 
         esp_err_t err = esp_http_client_perform(client);
         if (err != ESP_OK) {
-            ESP_LOGE(TAG, "error perform http(s) request %s", esp_err_to_name(err));
+            ESP_LOGE(TAG, "failed to perform http(s) request");
             if (config.event_handler == http_app_status_event_handler) {
                 if (relay_get_status()) {
-                    if (http_app_get_code() == HTTP_REQ_IDX_OFF) {
+                    if (http_app_get_code() == HTTP_REQ_CODE_DEV_OFF) {
                         relay_set_status(0);
 
                         ESP_LOGW(TAG, "relay is off");
 
-                        gui_set_mode(GUI_MODE_IDX_QR_CODE);
-                        audio_player_play_file(0);
+                        gui_set_mode(GUI_MODE_IDX_QRCODE);
+#ifdef CONFIG_ENABLE_AUDIO_PROMPT
+                        audio_player_play_file(MP3_FILE_IDX_NOTIFY);
+#endif
                     } else {
                         gui_set_mode(GUI_MODE_IDX_TIMER);
                     }
                 } else {
-                    gui_set_mode(GUI_MODE_IDX_QR_CODE);
+                    gui_set_mode(GUI_MODE_IDX_QRCODE);
                 }
-
-                led_set_mode(3);
+#ifdef CONFIG_ENABLE_LED
+                led_set_mode(LED_MODE_IDX_BLINK_M0);
+#endif
             }
         }
         esp_http_client_cleanup(client);
@@ -97,11 +99,11 @@ static void http_app_task(void *pvParameter)
         vTaskDelay(1000 / portTICK_RATE_MS);
 
         if (uxBits & HTTP_APP_STATUS_RUN_BIT) {
-            xEventGroupSetBits(user_event_group, HTTP_APP_STATUS_RDY_BIT);
+            xEventGroupSetBits(user_event_group, HTTP_APP_STATUS_DONE_BIT);
             xEventGroupClearBits(user_event_group, HTTP_APP_STATUS_RUN_BIT);
         }
 
-        xEventGroupSetBits(user_event_group, KEY_RUN_BIT);
+        key_set_scan_mode(KEY_SCAN_MODE_IDX_ON);
     }
 }
 

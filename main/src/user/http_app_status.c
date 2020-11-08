@@ -16,16 +16,17 @@
 #include "chip/wifi.h"
 #include "board/relay.h"
 
-#include "user/man.h"
-#include "user/gui.h"
+#include "user/key.h"
 #include "user/led.h"
+#include "user/gui.h"
+#include "user/man.h"
 #include "user/audio_player.h"
 #include "user/http_app_status.h"
 
 #define TAG "http_app_status"
 
 static bool response = false;
-static req_code_t req_code = HTTP_REQ_IDX_UPD;
+static req_code_t req_code = HTTP_REQ_CODE_DEV_UPD;
 
 esp_err_t http_app_status_event_handler(esp_http_client_event_t *evt)
 {
@@ -52,8 +53,8 @@ esp_err_t http_app_status_event_handler(esp_http_client_event_t *evt)
                     ESP_LOGW(TAG, "code: %d, status: %d", (int)code->valuedouble, cJSON_IsTrue(status));
 
                     switch ((int)code->valuedouble) {
-                        case HTTP_REQ_IDX_UPD:
-                            if (relay_get_status()) {
+                        case HTTP_REQ_CODE_DEV_UPD:
+                            if (relay_get_status() == RELAY_STATUS_IDX_ON) {
                                 if (cJSON_IsTrue(status)) {
                                     cJSON *user_info = cJSON_GetObjectItemCaseSensitive(root, "user_info");
                                     char *c_user_info = cJSON_GetStringValue(user_info);
@@ -69,46 +70,48 @@ esp_err_t http_app_status_event_handler(esp_http_client_event_t *evt)
                                         int hour, minute, second;
                                         sscanf(c_expire_time, "%d:%d:%d", &hour, &minute, &second);
 
-                                        man_set_exp_time(hour, minute, second);
+                                        man_set_expire_time(hour, minute, second);
                                     }
 
                                     gui_set_mode(GUI_MODE_IDX_TIMER);
                                 } else {
-                                    relay_set_status(0);
-
+                                    relay_set_status(RELAY_STATUS_IDX_OFF);
                                     ESP_LOGW(TAG, "relay is off");
 
-                                    gui_set_mode(GUI_MODE_IDX_QR_CODE);
-                                    audio_player_play_file(0);
+                                    gui_set_mode(GUI_MODE_IDX_QRCODE);
+#ifdef CONFIG_ENABLE_AUDIO_PROMPT
+                                    audio_player_play_file(MP3_FILE_IDX_NOTIFY);
+#endif
                                 }
                             } else {
                                 if (cJSON_IsTrue(status)) {
-                                    cJSON *token = cJSON_GetObjectItemCaseSensitive(root, "token");
-                                    char *c_token = cJSON_GetStringValue(token);
+                                    cJSON *qrcode = cJSON_GetObjectItemCaseSensitive(root, "qrcode");
+                                    char *c_qrcode = cJSON_GetStringValue(qrcode);
 
-                                    if (c_token) {
-                                        man_set_token(c_token);
+                                    if (c_qrcode) {
+                                        man_set_qrcode(c_qrcode);
                                     }
                                 }
 
-                                gui_set_mode(GUI_MODE_IDX_QR_CODE);
+                                gui_set_mode(GUI_MODE_IDX_QRCODE);
                             }
-
-                            led_set_mode(1);
-
+#ifdef CONFIG_ENABLE_LED
+                            led_set_mode(LED_MODE_IDX_BLINK_S0);
+#endif
                             break;
-                        case HTTP_REQ_IDX_OFF:
-                            relay_set_status(0);
-
+                        case HTTP_REQ_CODE_DEV_OFF:
+                            relay_set_status(RELAY_STATUS_IDX_OFF);
                             ESP_LOGW(TAG, "relay is off");
 
-                            gui_set_mode(GUI_MODE_IDX_QR_CODE);
-                            audio_player_play_file(0);
-
-                            led_set_mode(1);
-
+                            gui_set_mode(GUI_MODE_IDX_QRCODE);
+#ifdef CONFIG_ENABLE_LED
+                            led_set_mode(LED_MODE_IDX_BLINK_S0);
+#endif
+#ifdef CONFIG_ENABLE_AUDIO_PROMPT
+                            audio_player_play_file(MP3_FILE_IDX_NOTIFY);
+#endif
                             break;
-                        case HTTP_REQ_IDX_ON:
+                        case HTTP_REQ_CODE_DEV_ON:
                             if (cJSON_IsTrue(status)) {
                                 cJSON *user_info = cJSON_GetObjectItemCaseSensitive(root, "user_info");
                                 char *c_user_info = cJSON_GetStringValue(user_info);
@@ -124,22 +127,25 @@ esp_err_t http_app_status_event_handler(esp_http_client_event_t *evt)
                                     int hour, minute, second;
                                     sscanf(c_expire_time, "%d:%d:%d", &hour, &minute, &second);
 
-                                    man_set_exp_time(hour, minute, second);
+                                    man_set_expire_time(hour, minute, second);
                                 }
 
-                                relay_set_status(1);
-
+                                relay_set_status(RELAY_STATUS_IDX_ON);
                                 ESP_LOGW(TAG, "relay is on");
 
                                 gui_set_mode(GUI_MODE_IDX_TIMER);
-                                audio_player_play_file(1);
+#ifdef CONFIG_ENABLE_AUDIO_PROMPT
+                                audio_player_play_file(MP3_FILE_IDX_AUTH_DONE);
+#endif
                             } else {
-                                gui_set_mode(GUI_MODE_IDX_QR_CODE);
-                                audio_player_play_file(2);
+                                gui_set_mode(GUI_MODE_IDX_QRCODE);
+#ifdef CONFIG_ENABLE_AUDIO_PROMPT
+                                audio_player_play_file(MP3_FILE_IDX_AUTH_FAIL);
+#endif
                             }
-
-                            led_set_mode(1);
-
+#ifdef CONFIG_ENABLE_LED
+                            led_set_mode(LED_MODE_IDX_BLINK_S0);
+#endif
                             break;
                         default:
                             ESP_LOGE(TAG, "invalid code");
@@ -166,22 +172,24 @@ esp_err_t http_app_status_event_handler(esp_http_client_event_t *evt)
 
         EventBits_t uxBits = xEventGroupGetBits(user_event_group);
         if (uxBits & HTTP_APP_STATUS_FAIL_BIT) {
-            if (relay_get_status()) {
-                if (http_app_get_code() == HTTP_REQ_IDX_OFF) {
-                    relay_set_status(0);
-
+            if (relay_get_status() == RELAY_STATUS_IDX_ON) {
+                if (http_app_get_code() == HTTP_REQ_CODE_DEV_OFF) {
+                    relay_set_status(RELAY_STATUS_IDX_OFF);
                     ESP_LOGW(TAG, "relay is off");
 
-                    gui_set_mode(GUI_MODE_IDX_QR_CODE);
-                    audio_player_play_file(0);
+                    gui_set_mode(GUI_MODE_IDX_QRCODE);
+#ifdef CONFIG_ENABLE_AUDIO_PROMPT
+                    audio_player_play_file(MP3_FILE_IDX_NOTIFY);
+#endif
                 } else {
                     gui_set_mode(GUI_MODE_IDX_TIMER);
                 }
             } else {
-                gui_set_mode(GUI_MODE_IDX_QR_CODE);
+                gui_set_mode(GUI_MODE_IDX_QRCODE);
             }
-
-            led_set_mode(2);
+#ifdef CONFIG_ENABLE_LED
+            led_set_mode(LED_MODE_IDX_BLINK_M1);
+#endif
         }
         break;
     }
@@ -197,9 +205,9 @@ void http_app_status_prepare_data(char *buf, int len)
 {
     cJSON *root = NULL;
     root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "code", req_code);
-    cJSON_AddStringToObject(root, "status", relay_get_status() ? "on" : "off");
-    cJSON_AddStringToObject(root, "wifi_mac", wifi_mac_string);
+    cJSON_AddNumberToObject(root, "request", req_code);
+    cJSON_AddStringToObject(root, "device_mac", wifi_mac_string);
+    cJSON_AddStringToObject(root, "relay_status", (relay_get_status() == RELAY_STATUS_IDX_ON) ? "on" : "off");
     cJSON_PrintPreallocated(root, buf, len, 0);
     cJSON_Delete(root);
 }
@@ -221,24 +229,25 @@ void http_app_update_status(req_code_t code)
     if (!(uxBits & WIFI_RDY_BIT)) {
         ESP_LOGW(TAG, "network is down");
 
-        if (relay_get_status()) {
-            if (code == HTTP_REQ_IDX_OFF) {
-                relay_set_status(0);
-
+        if (relay_get_status() == RELAY_STATUS_IDX_ON) {
+            if (code == HTTP_REQ_CODE_DEV_OFF) {
+                relay_set_status(RELAY_STATUS_IDX_OFF);
                 ESP_LOGW(TAG, "relay is off");
 
-                gui_set_mode(GUI_MODE_IDX_QR_CODE);
-                audio_player_play_file(0);
+                gui_set_mode(GUI_MODE_IDX_QRCODE);
+#ifdef CONFIG_ENABLE_AUDIO_PROMPT
+                audio_player_play_file(MP3_FILE_IDX_NOTIFY);
             }
         } else {
-            if (code == HTTP_REQ_IDX_ON) {
-                audio_player_play_file(5);
+            if (code == HTTP_REQ_CODE_DEV_ON) {
+                audio_player_play_file(MP3_FILE_IDX_ERROR_REQ);
+#endif
             }
         }
 
         vTaskDelay(1000 / portTICK_RATE_MS);
 
-        xEventGroupSetBits(user_event_group, KEY_RUN_BIT);
+        key_set_scan_mode(KEY_SCAN_MODE_IDX_ON);
 
         return;
     }
@@ -249,10 +258,10 @@ void http_app_update_status(req_code_t code)
     uxBits = xEventGroupSync(
         user_event_group,
         HTTP_APP_STATUS_RUN_BIT,
-        HTTP_APP_STATUS_RDY_BIT,
+        HTTP_APP_STATUS_DONE_BIT,
         30000 / portTICK_RATE_MS
     );
-    if (!(uxBits & HTTP_APP_STATUS_RDY_BIT)) {
+    if (!(uxBits & HTTP_APP_STATUS_DONE_BIT)) {
         xEventGroupClearBits(user_event_group, HTTP_APP_STATUS_RUN_BIT);
     }
 }

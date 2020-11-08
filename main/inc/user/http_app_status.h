@@ -8,13 +8,9 @@
 #ifndef INC_USER_HTTP_APP_STATUS_H_
 #define INC_USER_HTTP_APP_STATUS_H_
 
-#include "esp_http_client.h"
+#include "user/http_app.h"
 
-typedef enum {
-    HTTP_REQ_IDX_UPD = 100,
-    HTTP_REQ_IDX_OFF = 101,
-    HTTP_REQ_IDX_ON  = 102,
-} req_code_t;
+#include "esp_http_client.h"
 
 extern esp_err_t http_app_status_event_handler(esp_http_client_event_t *evt);
 extern void http_app_status_prepare_data(char *buf, int len);
