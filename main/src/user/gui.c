@@ -181,32 +181,32 @@ static void gui_task(void *pvParameter)
             snprintf(text_buff, sizeof(text_buff), "T-C:");
             gdispGFillStringBox(gui_gdisp, 2, 34, 86, 32, text_buff, gui_font, Cyan, Black, justifyLeft);
 
-            snprintf(text_buff, sizeof(text_buff), "%02d:%02d:%02d", info->cur_hour, info->cur_min, info->cur_sec);
+            snprintf(text_buff, sizeof(text_buff), "%02d:%02d:%02d", info->current_hour, info->current_min, info->current_sec);
             gdispGFillStringBox(gui_gdisp, 88, 34, 150, 32, text_buff, gui_font, Cyan, Black, justifyRight);
 
             snprintf(text_buff, sizeof(text_buff), "T-E:");
             gdispGFillStringBox(gui_gdisp, 2, 67, 86, 32, text_buff, gui_font, Magenta, Black, justifyLeft);
 
-            snprintf(text_buff, sizeof(text_buff), "%02d:%02d:%02d", info->exp_hour, info->exp_min, info->exp_sec);
+            snprintf(text_buff, sizeof(text_buff), "%02d:%02d:%02d", info->expire_hour, info->expire_min, info->expire_sec);
             gdispGFillStringBox(gui_gdisp, 88, 67, 150, 32, text_buff, gui_font, Magenta, Black, justifyRight);
 
-            if (info->rem_hour <= 0 && info->rem_min <= 4) {
+            if (info->remain_hour <= 0 && info->remain_min <= 4) {
                 snprintf(text_buff, sizeof(text_buff), "T-R:");
                 gdispGFillStringBox(gui_gdisp, 2, 100, 86, 32, text_buff, gui_font, Orange, Black, justifyLeft);
 
-                snprintf(text_buff, sizeof(text_buff), "%02d:%02d:%02d", info->rem_hour, info->rem_min, info->rem_sec);
+                snprintf(text_buff, sizeof(text_buff), "%02d:%02d:%02d", info->remain_hour, info->remain_min, info->remain_sec);
                 gdispGFillStringBox(gui_gdisp, 88, 100, 150, 32, text_buff, gui_font, Orange, Black, justifyRight);
             } else {
                 snprintf(text_buff, sizeof(text_buff), "T-R:");
                 gdispGFillStringBox(gui_gdisp, 2, 100, 86, 32, text_buff, gui_font, Lime, Black, justifyLeft);
 
-                snprintf(text_buff, sizeof(text_buff), "%02d:%02d:%02d", info->rem_hour, info->rem_min, info->rem_sec);
+                snprintf(text_buff, sizeof(text_buff), "%02d:%02d:%02d", info->remain_hour, info->remain_min, info->remain_sec);
                 gdispGFillStringBox(gui_gdisp, 88, 100, 150, 32, text_buff, gui_font, Lime, Black, justifyRight);
             }
 
             gtimerJab(&gui_flush_timer);
 
-            xEventGroupSetBits(user_event_group, GUI_TIM_SYNC_BIT);
+            xEventGroupSetBits(user_event_group, GUI_RLD_SYNC_BIT);
             xEventGroupWaitBits(
                 user_event_group,
                 GUI_RLD_MODE_BIT,

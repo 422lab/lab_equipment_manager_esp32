@@ -26,7 +26,7 @@ typedef enum user_event_group_bits {
     MAN_SYNC_RUN_BIT = BIT4,
 
     GUI_RLD_MODE_BIT = BIT5,
-    GUI_TIM_SYNC_BIT = BIT6,
+    GUI_RLD_SYNC_BIT = BIT6,
 
     KEY_SCAN_RUN_BIT = BIT7,
     KEY_SCAN_CLR_BIT = BIT8,

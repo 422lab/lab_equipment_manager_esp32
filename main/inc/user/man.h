@@ -19,17 +19,17 @@ typedef struct {
     char qrcode[33];
     char user_info[11];
 
-    uint8_t cur_hour;
-    uint8_t cur_min;
-    uint8_t cur_sec;
+    uint8_t current_hour;
+    uint8_t current_min;
+    uint8_t current_sec;
 
-    uint8_t exp_hour;
-    uint8_t exp_min;
-    uint8_t exp_sec;
+    uint8_t expire_hour;
+    uint8_t expire_min;
+    uint8_t expire_sec;
 
-    uint8_t rem_hour;
-    uint8_t rem_min;
-    uint8_t rem_sec;
+    uint8_t remain_hour;
+    uint8_t remain_min;
+    uint8_t remain_sec;
 } man_info_t;
 
 extern void man_set_qrcode(const char *qrcode);
