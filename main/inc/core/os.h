@@ -12,29 +12,38 @@
 #include "freertos/event_groups.h"
 
 typedef enum wifi_event_group_bits {
-    WIFI_RDY_BIT = BIT0,
+    WIFI_RDY_BIT = BIT0
 } wifi_event_group_bits_t;
 
 typedef enum user_event_group_bits {
-    NTP_RUN_BIT = BIT0,
-    NTP_RDY_BIT = BIT1,
+    OS_PWR_DUMMY_BIT = 0x00,
+    OS_PWR_RESET_BIT = BIT0,
+    OS_PWR_SLEEP_BIT = BIT1,
 
-    MAN_RUN_BIT = BIT2,
-    KEY_RUN_BIT = BIT3,
+    NTP_SYNC_RUN_BIT = BIT2,
+    NTP_SYNC_SET_BIT = BIT3,
 
-    GUI_RLD_BIT  = BIT4,
-    GUI_DONE_BIT = BIT5,
+    MAN_SYNC_RUN_BIT = BIT4,
 
-    AUDIO_PLAYER_RUN_BIT  = BIT6,
-    AUDIO_PLAYER_IDLE_BIT = BIT7,
+    GUI_RLD_MODE_BIT = BIT5,
+    GUI_TIM_SYNC_BIT = BIT6,
 
-    HTTP_APP_STATUS_RUN_BIT  = BIT8,
-    HTTP_APP_STATUS_RDY_BIT  = BIT9,
-    HTTP_APP_STATUS_FAIL_BIT = BIT10,
+    KEY_SCAN_RUN_BIT = BIT7,
+    KEY_SCAN_CLR_BIT = BIT8,
+
+    AUDIO_PLAYER_RUN_BIT  = BIT9,
+    AUDIO_PLAYER_IDLE_BIT = BIT10,
+
+    HTTP_APP_STATUS_RUN_BIT  = BIT11,
+    HTTP_APP_STATUS_DONE_BIT = BIT12,
+    HTTP_APP_STATUS_FAIL_BIT = BIT13
 } user_event_group_bits_t;
 
 extern EventGroupHandle_t wifi_event_group;
 extern EventGroupHandle_t user_event_group;
+
+extern void os_pwr_reset_wait(EventBits_t bits);
+extern void os_pwr_sleep_wait(EventBits_t bits);
 
 extern void os_init(void);
 
