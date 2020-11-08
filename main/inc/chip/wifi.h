@@ -8,8 +8,6 @@
 #ifndef INC_CHIP_WIFI_H_
 #define INC_CHIP_WIFI_H_
 
-#include "esp_wifi.h"
-
 extern char wifi_hostname[40];
 extern char wifi_mac_string[18];
 extern char wifi_mac_address[6];
