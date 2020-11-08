@@ -9,15 +9,17 @@
 
 #include "driver/gpio.h"
 
+#include "board/relay.h"
+
 #define TAG "relay"
 
-static bool relay_status = false;
+static relay_status_t relay_status = RELAY_STATUS_IDX_OFF;
 
-void relay_set_status(bool status)
+void relay_set_status(relay_status_t status)
 {
     relay_status = status;
 
-    if (relay_status) {
+    if (relay_status == RELAY_STATUS_IDX_ON) {
 #ifdef CONFIG_RELAY_PIN_ACTIVE_LOW
         gpio_set_level(CONFIG_RELAY_PIN, 0);
 #else
@@ -32,21 +34,21 @@ void relay_set_status(bool status)
     }
 }
 
-bool relay_get_status(void)
+relay_status_t relay_get_status(void)
 {
     return relay_status;
 }
 
 void relay_init(void)
 {
-    relay_set_status(false);
+    relay_set_status(RELAY_STATUS_IDX_OFF);
 
     gpio_config_t io_conf = {
         .pin_bit_mask = BIT64(CONFIG_RELAY_PIN),
         .mode = GPIO_MODE_OUTPUT,
         .pull_up_en = false,
         .pull_down_en = false,
-        .intr_type = GPIO_INTR_DISABLE,
+        .intr_type = GPIO_INTR_DISABLE
     };
     gpio_config(&io_conf);
 
