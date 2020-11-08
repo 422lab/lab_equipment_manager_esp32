@@ -10,29 +10,38 @@
 
 #include <stdint.h>
 
+typedef enum {
+    MAN_SYNC_MODE_IDX_OFF = 0x00,
+    MAN_SYNC_MODE_IDX_ON  = 0x01
+} man_sync_mode_t;
+
 typedef struct {
-    char s_token[33];
-    char u_info[11];
+    char qrcode[33];
+    char user_info[11];
 
-    uint8_t n_hour;
-    uint8_t n_min;
-    uint8_t n_sec;
+    uint8_t cur_hour;
+    uint8_t cur_min;
+    uint8_t cur_sec;
 
-    uint8_t e_hour;
-    uint8_t e_min;
-    uint8_t e_sec;
+    uint8_t exp_hour;
+    uint8_t exp_min;
+    uint8_t exp_sec;
 
-    uint8_t r_hour;
-    uint8_t r_min;
-    uint8_t r_sec;
+    uint8_t rem_hour;
+    uint8_t rem_min;
+    uint8_t rem_sec;
 } man_info_t;
 
-extern void man_set_token(const char *s_token);
-extern void man_set_user_info(const char *u_info);
-extern void man_set_exp_time(int hour, int min, int sec);
+extern void man_set_qrcode(const char *qrcode);
+extern char *man_get_qrcode(void);
 
-extern char *man_get_token(void);
+extern void man_set_user_info(const char *user_info);
+extern void man_set_expire_time(int hour, int min, int sec);
+
 extern man_info_t *man_update_info(void);
+
+extern void man_set_sync_mode(man_sync_mode_t idx);
+extern man_sync_mode_t man_get_sync_mode(void);
 
 extern void man_init(void);
 
