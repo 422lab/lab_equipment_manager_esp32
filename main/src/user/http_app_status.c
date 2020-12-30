@@ -26,7 +26,7 @@
 #define TAG "http_app_status"
 
 static bool response = false;
-static req_code_t req_code = HTTP_REQ_CODE_DEV_UPD;
+static req_code_t request = HTTP_REQ_CODE_DEV_UPD;
 
 esp_err_t http_app_status_event_handler(esp_http_client_event_t *evt)
 {
@@ -47,13 +47,13 @@ esp_err_t http_app_status_event_handler(esp_http_client_event_t *evt)
             root = cJSON_Parse(evt->data);
             if (cJSON_HasObjectItem(root, "code")) {
                 cJSON *code = cJSON_GetObjectItemCaseSensitive(root, "code");
-                cJSON *status = cJSON_GetObjectItemCaseSensitive(root, "status");
 
                 if (cJSON_IsNumber(code)) {
-                    ESP_LOGW(TAG, "code: %d, status: %d", (int)code->valuedouble, cJSON_IsTrue(status));
-
                     switch ((int)code->valuedouble) {
-                        case HTTP_REQ_CODE_DEV_UPD:
+                        case HTTP_REQ_CODE_DEV_UPD: {
+                            cJSON *status = cJSON_GetObjectItemCaseSensitive(root, "status");
+                            ESP_LOGW(TAG, "code: %d, status: %d", (int)code->valuedouble, cJSON_IsTrue(status));
+
                             if (relay_get_status() == RELAY_STATUS_IDX_ON) {
                                 if (cJSON_IsTrue(status)) {
                                     cJSON *user_info = cJSON_GetObjectItemCaseSensitive(root, "user_info");
@@ -99,7 +99,10 @@ esp_err_t http_app_status_event_handler(esp_http_client_event_t *evt)
                             led_set_mode(LED_MODE_IDX_BLINK_S0);
 #endif
                             break;
-                        case HTTP_REQ_CODE_DEV_OFF:
+                        }
+                        case HTTP_REQ_CODE_DEV_OFF: {
+                            ESP_LOGW(TAG, "code: %d, result: 1", (int)code->valuedouble);
+
                             relay_set_status(RELAY_STATUS_IDX_OFF);
                             ESP_LOGW(TAG, "relay is off");
 
@@ -111,8 +114,12 @@ esp_err_t http_app_status_event_handler(esp_http_client_event_t *evt)
                             audio_player_play_file(MP3_FILE_IDX_NOTIFY);
 #endif
                             break;
-                        case HTTP_REQ_CODE_DEV_ON:
-                            if (cJSON_IsTrue(status)) {
+                        }
+                        case HTTP_REQ_CODE_DEV_ON: {
+                            cJSON *result = cJSON_GetObjectItemCaseSensitive(root, "result");
+                            ESP_LOGW(TAG, "code: %d, result: %d", (int)code->valuedouble, cJSON_IsTrue(result));
+
+                            if (cJSON_IsTrue(result)) {
                                 cJSON *user_info = cJSON_GetObjectItemCaseSensitive(root, "user_info");
                                 char *c_user_info = cJSON_GetStringValue(user_info);
 
@@ -147,8 +154,9 @@ esp_err_t http_app_status_event_handler(esp_http_client_event_t *evt)
                             led_set_mode(LED_MODE_IDX_BLINK_S0);
 #endif
                             break;
+                        }
                         default:
-                            ESP_LOGE(TAG, "invalid code");
+                            ESP_LOGE(TAG, "invalid code: %d", (int)code->valuedouble);
                             xEventGroupSetBits(user_event_group, HTTP_APP_STATUS_FAIL_BIT);
                             break;
                     }
@@ -205,7 +213,7 @@ void http_app_status_prepare_data(char *buf, int len)
 {
     cJSON *root = NULL;
     root = cJSON_CreateObject();
-    cJSON_AddNumberToObject(root, "request", req_code);
+    cJSON_AddNumberToObject(root, "request", request);
     cJSON_AddStringToObject(root, "device_mac", wifi_mac_string);
     cJSON_AddStringToObject(root, "relay_status", (relay_get_status() == RELAY_STATUS_IDX_ON) ? "on" : "off");
     cJSON_PrintPreallocated(root, buf, len, 0);
@@ -214,7 +222,7 @@ void http_app_status_prepare_data(char *buf, int len)
 
 req_code_t http_app_get_code(void)
 {
-    return req_code;
+    return request;
 }
 
 void http_app_update_status(req_code_t code)
@@ -252,7 +260,7 @@ void http_app_update_status(req_code_t code)
         return;
     }
 
-    req_code = code;
+    request = code;
     response = false;
 
     uxBits = xEventGroupSync(
