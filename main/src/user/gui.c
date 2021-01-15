@@ -36,12 +36,8 @@ static const char *img_file_ptr[][2] = {
 
 GDisplay *gui_gdisp = NULL;
 
-static uint8_t gui_backlight = 255;
-
-static coord_t gui_disp_width = 0;
-static coord_t gui_disp_height = 0;
-
 static GTimer gui_flush_timer;
+static uint8_t gui_backlight = 255;
 
 static gui_mode_t gui_mode = GUI_MODE_IDX_GIF_WIFI;
 
@@ -69,12 +65,12 @@ static void gui_draw_qrcode(const char *text, int border, uint32_t fg_color, uin
         gdispGClear(gui_gdisp, bg_color);
         gdispGSetBacklight(gui_gdisp, gui_backlight);
 
-        for (int y=-border; y<size+border; y++) {
-            for (int x=-border; x<size+border; x++) {
+        for (int y = -border; y < size + border; y++) {
+            for (int x = -border; x < size + border; x++) {
                 if (qrcodegen_getModule(qrcode, x, y)) {
-                    gdispGFillArea(gui_gdisp, x*5+59, y*5+5, 5, 5, fg_color);
+                    gdispGFillArea(gui_gdisp, x * 5 + 59, y * 5 + 5, 5, 5, fg_color);
                 } else {
-                    gdispGFillArea(gui_gdisp, x*5+59, y*5+5, 5, 5, bg_color);
+                    gdispGFillArea(gui_gdisp, x * 5 + 59, y * 5 + 5, 5, 5, bg_color);
                 }
             }
         }
@@ -101,8 +97,6 @@ static void gui_task(void *pvParameter)
 
     gui_gdisp = gdispGetDisplay(0);
     gui_font = gdispOpenFont("DejaVuSans32");
-    gui_disp_width = gdispGGetWidth(gui_gdisp);
-    gui_disp_height = gdispGGetHeight(gui_gdisp);
 
     gtimerStart(&gui_flush_timer, gui_flush_task, NULL, TRUE, TIME_INFINITE);
 
