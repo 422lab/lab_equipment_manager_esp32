@@ -65,6 +65,7 @@ static void man_task(void *pvParameter)
                     pdFALSE,
                     1000 / portTICK_RATE_MS
                 );
+
                 if (!(uxBits & GUI_RLD_SYNC_BIT)) {
                     continue;
                 }

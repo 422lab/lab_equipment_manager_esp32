@@ -163,8 +163,7 @@ static void gui_task(void *pvParameter)
 
             man_info_t *info = man_update_info();
 
-            EventBits_t uxBits = xEventGroupGetBits(wifi_event_group);
-            if (!(uxBits & WIFI_RDY_BIT)) {
+            if (!(xEventGroupGetBits(wifi_event_group) & WIFI_RDY_BIT)) {
                 snprintf(text_buff, sizeof(text_buff), "(%10s)", info->user_info);
                 gdispGFillStringBox(gui_gdisp, 2, 2, 236, 32, text_buff, gui_font, Silver, Black, justifyCenter);
             } else {
@@ -217,8 +216,7 @@ static void gui_task(void *pvParameter)
                 break;
             }
 
-            EventBits_t uxBits = xEventGroupGetBits(wifi_event_group);
-            if (!(uxBits & WIFI_RDY_BIT)) {
+            if (!(xEventGroupGetBits(wifi_event_group) & WIFI_RDY_BIT)) {
                 gui_draw_qrcode(man_get_qrcode(), 2, Black, Silver);
             } else {
                 gui_draw_qrcode(man_get_qrcode(), 2, Black, White);

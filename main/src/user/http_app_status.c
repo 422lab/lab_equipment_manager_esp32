@@ -178,8 +178,7 @@ esp_err_t http_app_status_event_handler(esp_http_client_event_t *evt)
             xEventGroupSetBits(user_event_group, HTTP_APP_STATUS_FAIL_BIT);
         }
 
-        EventBits_t uxBits = xEventGroupGetBits(user_event_group);
-        if (uxBits & HTTP_APP_STATUS_FAIL_BIT) {
+        if (xEventGroupGetBits(user_event_group) & HTTP_APP_STATUS_FAIL_BIT) {
             if (relay_get_status() == RELAY_STATUS_IDX_ON) {
                 if (http_app_get_code() == HTTP_REQ_CODE_DEV_OFF) {
                     relay_set_status(RELAY_STATUS_IDX_OFF);
@@ -227,14 +226,12 @@ req_code_t http_app_get_code(void)
 
 void http_app_update_status(req_code_t code)
 {
-    EventBits_t uxBits = xEventGroupGetBits(user_event_group);
-    if (uxBits & HTTP_APP_STATUS_RUN_BIT) {
+    if (xEventGroupGetBits(user_event_group) & HTTP_APP_STATUS_RUN_BIT) {
         ESP_LOGW(TAG, "app is running");
         return;
     }
 
-    uxBits = xEventGroupGetBits(wifi_event_group);
-    if (!(uxBits & WIFI_RDY_BIT)) {
+    if (!(xEventGroupGetBits(wifi_event_group) & WIFI_RDY_BIT)) {
         ESP_LOGW(TAG, "network is down");
 
         if (relay_get_status() == RELAY_STATUS_IDX_ON) {
@@ -263,12 +260,13 @@ void http_app_update_status(req_code_t code)
     request = code;
     response = false;
 
-    uxBits = xEventGroupSync(
+    EventBits_t uxBits = xEventGroupSync(
         user_event_group,
         HTTP_APP_STATUS_RUN_BIT,
         HTTP_APP_STATUS_DONE_BIT,
         30000 / portTICK_RATE_MS
     );
+
     if (!(uxBits & HTTP_APP_STATUS_DONE_BIT)) {
         xEventGroupClearBits(user_event_group, HTTP_APP_STATUS_RUN_BIT);
     }
