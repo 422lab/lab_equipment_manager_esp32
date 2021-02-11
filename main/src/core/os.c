@@ -32,8 +32,7 @@ EventGroupHandle_t user_event_group;
 static EventBits_t reset_wait_bits = OS_PWR_DUMMY_BIT;
 static EventBits_t sleep_wait_bits = OS_PWR_DUMMY_BIT;
 
-static void wifi_event_handler(void* arg, esp_event_base_t event_base,
-                               int32_t event_id, void* event_data)
+static void wifi_event_handler(void *arg, esp_event_base_t event_base, int32_t event_id, void *event_data)
 {
     switch (event_id) {
         case WIFI_EVENT_STA_START:
@@ -50,8 +49,7 @@ static void wifi_event_handler(void* arg, esp_event_base_t event_base,
     }
 }
 
-static void ip_event_handler(void* arg, esp_event_base_t event_base,
-                             int32_t event_id, void* event_data)
+static void ip_event_handler(void *arg, esp_event_base_t event_base, int32_t event_id, void *event_data)
 {
     switch (event_id) {
         case IP_EVENT_STA_GOT_IP:
@@ -60,7 +58,7 @@ static void ip_event_handler(void* arg, esp_event_base_t event_base,
             key_set_scan_mode(KEY_SCAN_MODE_IDX_OFF);
 
             ntp_sync_time();
-            http_app_update_status(HTTP_REQ_CODE_DEV_UPD);
+            http_app_update_status(HTTP_REQ_CODE_DEV_GET_INFO);
             man_set_sync_mode(MAN_SYNC_MODE_IDX_ON);
 
             break;

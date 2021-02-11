@@ -213,7 +213,7 @@ void http_app_status_prepare_data(char *buf, int len)
     cJSON *root = NULL;
     root = cJSON_CreateObject();
     cJSON_AddNumberToObject(root, "request", request);
-    cJSON_AddStringToObject(root, "device_mac", wifi_mac_string);
+    cJSON_AddStringToObject(root, "device_mac", wifi_get_mac_string());
     cJSON_AddStringToObject(root, "relay_status", (relay_get_status() == RELAY_STATUS_IDX_ON) ? "on" : "off");
     cJSON_PrintPreallocated(root, buf, len, 0);
     cJSON_Delete(root);
