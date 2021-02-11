@@ -9,9 +9,9 @@
 #define INC_USER_HTTP_APP_H_
 
 typedef enum {
-    HTTP_REQ_CODE_DEV_UPD = 100,  // 设备端请求获取更新
-    HTTP_REQ_CODE_DEV_OFF = 101,  // 设备端发送下机通知
-    HTTP_REQ_CODE_DEV_ON  = 102   // 设备端请求允许上机
+    HTTP_REQ_CODE_DEV_GET_INFO    = 210, // 设备端获取用户信息
+    HTTP_REQ_CODE_DEV_SET_ONLINE  = 211, // 设备端请求允许上机
+    HTTP_REQ_CODE_DEV_SET_OFFLINE = 212  // 设备端发送下机通知
 } req_code_t;
 
 // cert0.pem

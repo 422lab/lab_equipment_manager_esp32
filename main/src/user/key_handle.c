@@ -17,10 +17,10 @@ void power_key_handle(void)
     if (relay_get_status()) {
         ESP_LOGW(PWR_KEY_TAG, "power off");
 
-        http_app_update_status(HTTP_REQ_CODE_DEV_OFF);
+        http_app_update_status(HTTP_REQ_CODE_DEV_SET_OFFLINE);
     } else {
         ESP_LOGW(PWR_KEY_TAG, "power on");
 
-        http_app_update_status(HTTP_REQ_CODE_DEV_ON);
+        http_app_update_status(HTTP_REQ_CODE_DEV_SET_ONLINE);
     }
 }

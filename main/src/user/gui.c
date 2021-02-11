@@ -49,7 +49,7 @@ static void gui_draw_qrcode(const char *text, int border, uint32_t fg_color, uin
     qrcode = calloc(1, qrcodegen_BUFFER_LEN_FOR_VERSION(MAX_QRCODE_VERSION));
     qrtemp = calloc(1, qrcodegen_BUFFER_LEN_FOR_VERSION(MAX_QRCODE_VERSION));
     if (!qrcode || !qrtemp) {
-        ESP_LOGE(TAG, "not enough memory");
+        ESP_LOGE(TAG, "failed to allocate memory");
 
         free(qrcode);
         free(qrtemp);

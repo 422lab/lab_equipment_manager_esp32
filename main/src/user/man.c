@@ -50,7 +50,7 @@ static void man_task(void *pvParameter)
                 man_update_info();
 
                 if (timeinfo.tm_sec == update_sec) {
-                    http_app_update_status(HTTP_REQ_CODE_DEV_UPD);
+                    http_app_update_status(HTTP_REQ_CODE_DEV_GET_INFO);
                 }
 
                 break;
@@ -76,9 +76,9 @@ static void man_task(void *pvParameter)
                 }
 #endif
                 if (remain == 0) {
-                    http_app_update_status(HTTP_REQ_CODE_DEV_OFF);
+                    http_app_update_status(HTTP_REQ_CODE_DEV_SET_OFFLINE);
                 } else if (remain % 60 == update_sec) {
-                    http_app_update_status(HTTP_REQ_CODE_DEV_UPD);
+                    http_app_update_status(HTTP_REQ_CODE_DEV_GET_INFO);
                 }
 
                 break;

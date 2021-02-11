@@ -70,7 +70,7 @@ static void http_app_task(void *pvParameter)
             ESP_LOGE(TAG, "failed to perform http(s) request");
             if (config.event_handler == http_app_status_event_handler) {
                 if (relay_get_status()) {
-                    if (http_app_get_code() == HTTP_REQ_CODE_DEV_OFF) {
+                    if (http_app_get_code() == HTTP_REQ_CODE_DEV_SET_OFFLINE) {
                         relay_set_status(0);
 
                         ESP_LOGW(TAG, "relay is off");

@@ -26,7 +26,7 @@
 #define TAG "http_app_status"
 
 static bool response = false;
-static req_code_t request = HTTP_REQ_CODE_DEV_UPD;
+static req_code_t request = HTTP_REQ_CODE_DEV_GET_INFO;
 
 esp_err_t http_app_status_event_handler(esp_http_client_event_t *evt)
 {
@@ -50,7 +50,7 @@ esp_err_t http_app_status_event_handler(esp_http_client_event_t *evt)
 
                 if (cJSON_IsNumber(code)) {
                     switch ((int)code->valuedouble) {
-                        case HTTP_REQ_CODE_DEV_UPD: {
+                        case HTTP_REQ_CODE_DEV_GET_INFO: {
                             cJSON *status = cJSON_GetObjectItemCaseSensitive(root, "status");
                             ESP_LOGW(TAG, "code: %d, status: %d", (int)code->valuedouble, cJSON_IsTrue(status));
 
@@ -100,7 +100,7 @@ esp_err_t http_app_status_event_handler(esp_http_client_event_t *evt)
 #endif
                             break;
                         }
-                        case HTTP_REQ_CODE_DEV_OFF: {
+                        case HTTP_REQ_CODE_DEV_SET_OFFLINE: {
                             ESP_LOGW(TAG, "code: %d, result: 1", (int)code->valuedouble);
 
                             relay_set_status(RELAY_STATUS_IDX_OFF);
@@ -115,7 +115,7 @@ esp_err_t http_app_status_event_handler(esp_http_client_event_t *evt)
 #endif
                             break;
                         }
-                        case HTTP_REQ_CODE_DEV_ON: {
+                        case HTTP_REQ_CODE_DEV_SET_ONLINE: {
                             cJSON *result = cJSON_GetObjectItemCaseSensitive(root, "result");
                             ESP_LOGW(TAG, "code: %d, result: %d", (int)code->valuedouble, cJSON_IsTrue(result));
 
@@ -180,7 +180,7 @@ esp_err_t http_app_status_event_handler(esp_http_client_event_t *evt)
 
         if (xEventGroupGetBits(user_event_group) & HTTP_APP_STATUS_FAIL_BIT) {
             if (relay_get_status() == RELAY_STATUS_IDX_ON) {
-                if (http_app_get_code() == HTTP_REQ_CODE_DEV_OFF) {
+                if (http_app_get_code() == HTTP_REQ_CODE_DEV_SET_OFFLINE) {
                     relay_set_status(RELAY_STATUS_IDX_OFF);
                     ESP_LOGW(TAG, "relay is off");
 
@@ -235,7 +235,7 @@ void http_app_update_status(req_code_t code)
         ESP_LOGW(TAG, "network is down");
 
         if (relay_get_status() == RELAY_STATUS_IDX_ON) {
-            if (code == HTTP_REQ_CODE_DEV_OFF) {
+            if (code == HTTP_REQ_CODE_DEV_SET_OFFLINE) {
                 relay_set_status(RELAY_STATUS_IDX_OFF);
                 ESP_LOGW(TAG, "relay is off");
 
@@ -244,7 +244,7 @@ void http_app_update_status(req_code_t code)
                 audio_player_play_file(MP3_FILE_IDX_NOTIFY);
             }
         } else {
-            if (code == HTTP_REQ_CODE_DEV_ON) {
+            if (code == HTTP_REQ_CODE_DEV_SET_ONLINE) {
                 audio_player_play_file(MP3_FILE_IDX_ERROR_REQ);
 #endif
             }
