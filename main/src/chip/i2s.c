@@ -13,7 +13,7 @@
 #define I2S1_TAG "i2s-1"
 
 #ifdef CONFIG_ENABLE_AUDIO_PROMPT
-static i2s_config_t output_config = {
+static i2s_config_t output_conf = {
     .mode = I2S_MODE_MASTER | I2S_MODE_TX,
     .communication_format = I2S_COMM_FORMAT_STAND_I2S,
     .use_apll = 1,                                                          // use APLL
@@ -29,7 +29,7 @@ static i2s_config_t output_config = {
 #if (CONFIG_AUDIO_OUTPUT_I2S_NUM == 0)
 static void i2s0_init(void)
 {
-    ESP_ERROR_CHECK(i2s_driver_install(I2S_NUM_0, &output_config, 0, NULL));
+    ESP_ERROR_CHECK(i2s_driver_install(I2S_NUM_0, &output_conf, 0, NULL));
 
     i2s_pin_config_t pin_conf = {
         .bck_io_num = CONFIG_I2S_BCLK_PIN,
@@ -58,7 +58,7 @@ static void i2s0_deinit(void)
 #if (CONFIG_AUDIO_OUTPUT_I2S_NUM == 1)
 static void i2s1_init(void)
 {
-    ESP_ERROR_CHECK(i2s_driver_install(I2S_NUM_1, &output_config, 0, NULL));
+    ESP_ERROR_CHECK(i2s_driver_install(I2S_NUM_1, &output_conf, 0, NULL));
 
     i2s_pin_config_t pin_conf = {
         .bck_io_num = CONFIG_I2S_BCLK_PIN,
@@ -105,10 +105,10 @@ void i2s_output_deinit(void)
 
 void i2s_output_set_sample_rate(unsigned int sample_rate)
 {
-    if (sample_rate != output_config.sample_rate) {
-        output_config.sample_rate = sample_rate;
-        i2s_zero_dma_buffer(CONFIG_AUDIO_OUTPUT_I2S_NUM);
-        i2s_set_sample_rates(CONFIG_AUDIO_OUTPUT_I2S_NUM, output_config.sample_rate);
+    if (sample_rate != output_conf.sample_rate) {
+        output_conf.sample_rate = sample_rate;
+
+        i2s_set_sample_rates(CONFIG_AUDIO_OUTPUT_I2S_NUM, output_conf.sample_rate);
     }
 }
 #endif
