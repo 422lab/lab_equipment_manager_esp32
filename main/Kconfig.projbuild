@@ -4,14 +4,10 @@ menu "Server Configuration"
 config SERVER_URL
     string "Server URL"
     default "example.com"
-    help
-        Server URL.
 
 choice TRANSFER_PROTOCOL
     prompt "Transfer Protocol"
     default TRANSFER_PROTOCOL_HTTPS
-    help
-        Select to use which transfer protocol.
 
 config TRANSFER_PROTOCOL_HTTP
     bool "http"
@@ -23,28 +19,20 @@ config VERIFY_SERVER_CERT
     bool "Verify Server SSL Certificate"
     default "y"
     depends on TRANSFER_PROTOCOL_HTTPS
-    help
-        Select this to enable server ssl certificate verification.
 endmenu
 
 menu "WiFi Configuration"
 config WIFI_SSID
     string "WiFi SSID"
     default "myssid"
-    help
-        SSID (network name) for the device to connect to.
 
 config WIFI_PASSWORD
     string "WiFi Password"
     default "mypassword"
-    help
-        WiFi password (WPA or WPA2) for the device to use.
 
 config WIFI_HOSTNAME_PREFIX
     string "WiFi Hostname Prefix"
     default "LEM"
-    help
-        WiFi hostname prefix for the device to use.
 endmenu
 
 menu "NTP Configuration"
@@ -61,8 +49,6 @@ menu "GUI Configuration"
 choice LCD_ORIENTATION
     prompt "LCD Orientation"
     default LCD_ORIENTATION_NORMAL
-    help
-        Select LCD orientation.
 
 config LCD_ORIENTATION_NORMAL
     bool "Normal"
@@ -104,15 +90,11 @@ menu "LED Configuration"
 config ENABLE_LED
     bool "Enable LED"
     default y
-    help
-        Select this to enable LED Output.
 
 choice LED_ACTIVE_LEVEL
     prompt "LED Active Level"
     default LED_ACTIVE_HIGH
     depends on ENABLE_LED
-    help
-        Select LED Active Level.
 
 config LED_ACTIVE_HIGH
     bool "Active High"
@@ -134,8 +116,6 @@ config POWER_KEY_HOLD_TIME
 choice POWER_KEY_ACTIVE_LEVEL
     prompt "Power Key Active Level"
     default POWER_KEY_ACTIVE_LOW
-    help
-        Select Power Key Active Level.
 
 config POWER_KEY_ACTIVE_HIGH
     bool "Active High"
@@ -152,8 +132,6 @@ menu "Relay Configuration"
 choice RELAY_PIN_ACTIVE_LEVEL
     prompt "Relay Pin Active Level"
     default RELAY_PIN_ACTIVE_HIGH
-    help
-        Select Relay Pin Active Level.
 
 config RELAY_PIN_ACTIVE_HIGH
     bool "Active High"
@@ -170,15 +148,11 @@ menu "Audio Configuration"
 config ENABLE_AUDIO_PROMPT
     bool "Enable Audio Prompt"
     default y
-    help
-        Select this to enable audio prompt.
 
 choice AUDIO_OUTPUT
     prompt "Audio Output"
     default AUDIO_OUTPUT_I2S1
     depends on ENABLE_AUDIO_PROMPT
-    help
-        Select Audio Output Interface.
 
     config AUDIO_OUTPUT_I2S0
         bool "I2S-0"
