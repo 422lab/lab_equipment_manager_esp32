@@ -63,7 +63,7 @@ static void ntp_task(void *pvParameter)
     const int max_retry = 15;
     while (sntp_get_sync_status() == SNTP_SYNC_STATUS_RESET) {
         if (++retry > max_retry) {
-            ESP_LOGE(TAG, "time sync timeout");
+            ESP_LOGE(TAG, "failed to synchronize NTP time");
 
             gui_set_mode(GUI_MODE_IDX_GIF_PWR);
             vTaskDelay(2000 / portTICK_RATE_MS);

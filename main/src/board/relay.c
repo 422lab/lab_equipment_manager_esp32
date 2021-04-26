@@ -8,7 +8,6 @@
 #include "esp_log.h"
 
 #include "driver/gpio.h"
-
 #include "board/relay.h"
 
 #define TAG "relay"

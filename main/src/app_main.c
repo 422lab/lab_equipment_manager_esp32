@@ -40,7 +40,7 @@ static void chip_init(void)
     i2s_output_init();
 #endif
 
-    hspi_init();
+    spi_host_init();
 }
 
 static void board_init(void)
